@@ -1,17 +1,17 @@
 #pragma once
 
-#include "Eigen.h"
-#include "mesh.h"
-#include "ProcrustesAligner.h"
+#include "../include/Eigen.h"
+#include "../include/mesh.h"
+#include "../include/ProcrustesAligner.h"
 
 //#define USE_DENSE_SYSTEM_MATRIX
 
 class ARAP
 {
 public:
-	ARAP() : m_verticesBaseMesh(nullptr), m_verticesDeformed(nullptr), m_rotations(nullptr){}
+	ARAP() : m_verticesBaseMesh(nullptr), m_verticesDeformed(nullptr), m_rotations(nullptr) {}
 
-	~ARAP() {}
+	~ARAP();
 
 	void SetBaseMesh(const Mesh& baseMesh);
 	void DeformMesh(const std::vector<std::pair<unsigned int, Eigen::Vector3f>>& constraints, unsigned int nIter = 10);

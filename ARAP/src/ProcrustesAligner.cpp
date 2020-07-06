@@ -1,5 +1,6 @@
 #pragma once
 #include "ProcrustesAligner.h"
+#include <vector>
 
 Matrix4f ProcrustesAligner::estimatePose(const std::vector<Vector3f>& sourcePoints, const std::vector<Vector3f>& targetPoints) {
 	ASSERT(sourcePoints.size() == targetPoints.size() && "The number of source and target points should be the same, since every source point is matched with corresponding target point.");

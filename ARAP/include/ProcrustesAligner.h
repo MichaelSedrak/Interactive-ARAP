@@ -1,5 +1,5 @@
 #pragma once
-#include "SimpleMesh.h"
+#include <vector>
 
 class ProcrustesAligner {
 public:

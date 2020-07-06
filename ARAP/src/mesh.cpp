@@ -18,7 +18,18 @@ const std::vector<int>& Mesh::getTriangles() const{
 
 void Mesh::transform(const float& transformation){
     // TODO
-} 
+}
+
+const int Mesh::getVertexCount() const{
+	return m_vertices.size()/3;
+}
+const int Mesh::getTriangleCount() const{
+	return m_triangles.size() / 3;
+}
+
+void Mesh::setVertexAtIndex(int i, float x, float y, float z) {
+	//TODO
+}
 
 bool Mesh::loadMesh(const std::string& filename){
     // Read off file (Important: Only .off files are supported).

@@ -7,10 +7,12 @@
 
 //#define USE_DENSE_SYSTEM_MATRIX
 
+/*
 ARAP::ARAP() : m_verticesBaseMesh(nullptr), m_verticesDeformed(nullptr), m_rotations(nullptr)
 {
-	m_procrustesAligner = ProcrustesAligner();
+	//m_procrustesAligner = new ProcrustesAligner();
 }
+*/
 
 ARAP::~ARAP()
 {
@@ -51,7 +53,7 @@ void ARAP::SetBaseMesh(const Mesh& baseMesh)
 	InitSystemMatrix();
 }
 
-void ARAP::DeformMesh(const std::vector<std::pair<unsigned int, Eigen::Vector3f>>& constraints, unsigned int nIter = 10)
+void ARAP::DeformMesh(const std::vector<std::pair<unsigned int, Eigen::Vector3f>>& constraints, unsigned int nIter)
 {
 	VERBOSE("Deform mesh ...");
 	// reset to unmodified mesh
@@ -136,14 +138,17 @@ void ARAP::InitSystemMatrix()
 				this->m_systemMatrix(i, v2) = -w_ij;
 #else
 				this->m_systemMatrixSparse.coeffRef(i, i) += w_ij;
-				this->m_systemMatrixSparse.insert(i, v2) = -w_ij;
-					
+				//this->m_systemMatrixSparse.insert(i, v2) = -w_ij;
+				this->m_systemMatrixSparse.coeffRef(i, v2) = -w_ij;
+#endif
+#ifdef USE_DENSE_SYSTEM_MATRIX
 				//add edge to v3
 				this->m_systemMatrix(i, i) += w_ij;
 				this->m_systemMatrix(i, v3) = -w_ij;
 #else
 				this->m_systemMatrixSparse.coeffRef(i, i) += w_ij;
-				this->m_systemMatrixSparse.insert(i, v3) = -w_ij;
+				//this->m_systemMatrixSparse.insert(i, v3) = -w_ij;
+				this->m_systemMatrixSparse.coeffRef(i, v3) = -w_ij;
 #endif
 			}
 			else if (v2 == i) {
@@ -154,14 +159,17 @@ void ARAP::InitSystemMatrix()
 				this->m_systemMatrix(i, v1) = -w_ij;
 #else
 				this->m_systemMatrixSparse.coeffRef(i, i) += w_ij;
-				this->m_systemMatrixSparse.insert(i, v1) = -w_ij;
-
+				//this->m_systemMatrixSparse.insert(i, v1) = -w_ij;
+				this->m_systemMatrixSparse.coeffRef(i, v1) = -w_ij;
+#endif
+#ifdef USE_DENSE_SYSTEM_MATRIX
 				//add edge to v3
 				this->m_systemMatrix(i, i) += w_ij;
 				this->m_systemMatrix(i, v3) = -w_ij;
 #else
 				this->m_systemMatrixSparse.coeffRef(i, i) += w_ij;
-				this->m_systemMatrixSparse.insert(i, v3) = -w_ij;
+				//this->m_systemMatrixSparse.insert(i, v3) = -w_ij;
+				this->m_systemMatrixSparse.coeffRef(i, v3) = -w_ij;
 #endif
 			}
 			else if (v3 == i) {
@@ -172,14 +180,17 @@ void ARAP::InitSystemMatrix()
 				this->m_systemMatrix(i, v1) = -w_ij;
 #else
 				this->m_systemMatrixSparse.coeffRef(i, i) += w_ij;
-				this->m_systemMatrixSparse.insert(i, v1) = -w_ij;
-
+				//this->m_systemMatrixSparse.insert(i, v1) = -w_ij;
+				this->m_systemMatrixSparse.coeffRef(i, v1) = -w_ij;
+#endif
+#ifdef USE_DENSE_SYSTEM_MATRIX
 				//add edge to v3
 				this->m_systemMatrix(i, i) += w_ij;
 				this->m_systemMatrix(i, v2) = -w_ij;
 #else
 				this->m_systemMatrixSparse.coeffRef(i, i) += w_ij;
-				this->m_systemMatrixSparse.insert(i, v2) = -w_ij;
+				//this->m_systemMatrixSparse.insert(i, v2) = -w_ij;
+				this->m_systemMatrixSparse.coeffRef(i, v2) = -w_ij;
 #endif
 			}
 		}
@@ -275,7 +286,7 @@ void ARAP::SolveForRotations()
 			}
 		}
 
-		this->m_rotations[i] = m_procrustesAligner.estimatePose(currentPositions, basePositions).block<3, 3>(0, 0);
+		//this->m_rotations[i] = m_procrustesAligner.estimatePose(currentPositions, basePositions).block<3, 3>(0, 0);
 	}
 
 	VERBOSE("Solve for rotations ... DONE!");
