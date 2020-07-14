@@ -35,12 +35,12 @@ void Solver::PrecomputeCotangentWeights(){
 
             // https://wikimedia.org/api/rest_v1/media/math/render/svg/8231849c9a676c7dc50c5ce348de162a19e411b2
             // Edge obviously exists
-            weights.coeffRef(face(i, map(j, 0)), face(i, map(j, 1))) += (cot(j) / 2.0); 
-            weights.coeffRef(face(i, map(j, 1)), face(i, map(j, 0))) += (cot(j) / 2.0); 
+            weights.coeffRef(faces(i, map(j, 0)), face(i, map(j, 1))) += (cot(j) / 2.0); 
+            weights.coeffRef(faces(i, map(j, 1)), face(i, map(j, 0))) += (cot(j) / 2.0); 
 
             // "i = j"
-            weights.coeffRef(face(i, map(j, 0)), face(i, map(j, 0))) -= (cot(j) / 2.0); 
-            weights.coeffRef(face(i, map(j, 1)), face(i, map(j, 1))) -= (cot(j) / 2.0); 
+            weights.coeffRef(faces(i, map(j, 0)), face(i, map(j, 0))) -= (cot(j) / 2.0); 
+            weights.coeffRef(faces(i, map(j, 1)), face(i, map(j, 1))) -= (cot(j) / 2.0); 
 
             // else 0 -> already satisfied with sparse matrix
         }
