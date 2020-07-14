@@ -5,7 +5,7 @@
 #include "../include/arap.h"
 
 // g++
-// g++ -I../include -I../libs/libigl-2.2.0/include -I../libs/eigen-3.3.7/ mesh.cpp arap.cpp test_main.cpp -o test
+// g++ -I../include -I../libs/libigl-2.2.0/include -I../libs/eigen-3.3.7/ mesh.cpp arap.cpp test_main_refacto_refactor.cpp -o test
 
 int main()
 {
