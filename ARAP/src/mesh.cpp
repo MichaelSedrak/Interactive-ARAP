@@ -21,14 +21,16 @@ void Mesh::transform(const float& transformation){
 }
 
 const int Mesh::getVertexCount() const{
-	return m_vertices.size()/3;
+	return m_vertices.size() / 3;
 }
 const int Mesh::getTriangleCount() const{
 	return m_triangles.size() / 3;
 }
 
 void Mesh::setVertexAtIndex(int i, float x, float y, float z) {
-	//TODO
+    m_vertices[i * 3] = x;
+    m_vertices[(i * 3) + 1] = y;
+    m_vertices[(i * 3) + 2] = z;
 }
 
 bool Mesh::loadMesh(const std::string& filename){

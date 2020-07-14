@@ -1,33 +1,30 @@
-#pragma once
-
 #include "arap.h"
-#include "Eigen.h"
+#include <stdlib.h>
+// #include "Eigen.h"
+#include "Eigen/Sparse"
+#include "Eigen/Dense"
+#include "Eigen/Core"
+#include "Eigen/Geometry"
 #include "mesh.h"
-#include "ProcrustesAligner.h"
+#include <igl/procrustes.h>
+//#include "ProcrustesAligner.h"
 
 //#define USE_DENSE_SYSTEM_MATRIX
-
-/*
-ARAP::ARAP() : m_verticesBaseMesh(nullptr), m_verticesDeformed(nullptr), m_rotations(nullptr)
-{
-	//m_procrustesAligner = new ProcrustesAligner();
-}
-*/
 
 ARAP::~ARAP()
 {
 	// free memory
-	SAFE_DELETE_ARRAY(this->m_verticesBaseMesh);
-	SAFE_DELETE_ARRAY(this->m_verticesDeformed);
-	SAFE_DELETE_ARRAY(this->m_rotations);
+	free(this->m_verticesBaseMesh);
+	free(this->m_verticesDeformed);
+	free(this->m_rotations);
 }
 
 void ARAP::SetBaseMesh(const Mesh& baseMesh)
 {
 	// free memory
-	SAFE_DELETE_ARRAY(this->m_verticesBaseMesh);
-	SAFE_DELETE_ARRAY(this->m_verticesDeformed);
-	SAFE_DELETE_ARRAY(this->m_rotations);
+	free(this->m_verticesBaseMesh);
+	free(this->m_verticesDeformed);
+	free(this->m_rotations);
 
 	// set base mesh
 	this->m_baseMesh = baseMesh;
@@ -55,7 +52,7 @@ void ARAP::SetBaseMesh(const Mesh& baseMesh)
 
 void ARAP::DeformMesh(const std::vector<std::pair<unsigned int, Eigen::Vector3f>>& constraints, unsigned int nIter)
 {
-	VERBOSE("Deform mesh ...");
+	std::cout << "Deform mesh ..." << std::endl;
 	// reset to unmodified mesh
 	memcpy(this->m_verticesDeformed, this->m_verticesBaseMesh, sizeof(Eigen::Vector3f) * this->m_nVertices);
 
@@ -64,10 +61,11 @@ void ARAP::DeformMesh(const std::vector<std::pair<unsigned int, Eigen::Vector3f>
 	for (auto c : constraints)
 	{
 		this->m_verticesDeformed[c.first] = c.second;
+        std::cout << "Constraint " << c.first << std::endl;
+        std::cout << c.second << std::endl;
 	}
 
 	// run flip-flop optimization
-	ProgressBar("Deform mesh", 0.0f);
 	for (unsigned int iter = 0; iter < nIter; ++iter)
 	{
 		// compute rotations
@@ -76,10 +74,14 @@ void ARAP::DeformMesh(const std::vector<std::pair<unsigned int, Eigen::Vector3f>
 		// compute optimal vertex positions
 		SolveForVertexPositions(constraints);
 
-		ProgressBar("Deform mesh", iter / (nIter - 1.0f));
 	}
 
-	VERBOSE("Deform mesh ... DONE!");
+	std::cout << "Deform mesh ... DONE!" << std::endl;
+    /*
+    for(int i = 0; i < this->m_nVertices; i++){
+        std::cout << this->m_verticesDeformed[i] << std::endl;
+    }
+    */
 }
 
 Mesh ARAP::GetDeformedMesh()
@@ -98,7 +100,7 @@ Mesh ARAP::GetDeformedMesh()
 
 void ARAP::InitSystemMatrix()
 {
-	VERBOSE("Init system matrix ...");
+	std::cout << "Init system matrix ..." << std::endl;
 
 	// allocate memory
 #ifdef USE_DENSE_SYSTEM_MATRIX
@@ -196,12 +198,12 @@ void ARAP::InitSystemMatrix()
 		}
 	}
 
-	VERBOSE("Init system matrix ... DONE!");
+	std::cout << "Init system matrix ... DONE!" << std::endl;
 }
 
 void ARAP::ComputeRightHandSide()
 {
-	VERBOSE("Compute right hand side ...");
+	std::cout << "Compute right hand side ..." << std::endl;
 
 	// reset rhs
 	this->m_rhsX.setZero();
@@ -241,12 +243,12 @@ void ARAP::ComputeRightHandSide()
 		this->m_rhsZ(i) = sum.z();
 	}
 
-	VERBOSE("Compute right hand side ... DONE!");
+	std::cout << "Compute right hand side ... DONE!" << std::endl;
 }
 
 void ARAP::SolveForRotations()
 {
-	VERBOSE("Solve for rotations ...");
+	std::cout << "Solve for rotations ..." << std::endl;
 
 #pragma omp parallel for
 	for (int i = 0; i < (int)this->m_nVertices; ++i)
@@ -287,14 +289,41 @@ void ARAP::SolveForRotations()
 		}
 
 		//this->m_rotations[i] = m_procrustesAligner.estimatePose(currentPositions, basePositions).block<3, 3>(0, 0);
+        Eigen::MatrixXd X(basePositions.size(), 3);
+        Eigen::MatrixXd Y(currentPositions.size(), 3); // (containing 3d points as rows)
+        double scale;
+        Eigen::MatrixXd R;
+        Eigen::VectorXd t;
+
+        // std::cout << "The matrix X is of size " << X.rows() << "x" << X.cols() << std::endl;
+        // std::cout << "The matrix Y is of size " << Y.rows() << "x" << Y.cols() << std::endl;
+        
+        for(const auto& vert: basePositions) {
+            auto i = &vert - &basePositions[0];
+            X.row(i) = vert.cast<double>();
+        }
+
+        for(const auto& vert: currentPositions) {
+            auto i = &vert - &currentPositions[0];
+            Y.row(i) = vert.cast<double>();
+        }
+
+        // std::cout << X << std::endl;
+        // std::cout << "--------------" << std::endl;
+        // std::cout << Y << std::endl;
+        igl::procrustes(X,Y,false,false,scale,R,t);
+        // std::cout << "Rotation Matrix:" << std::endl;
+        // std::cout << R << std::endl;
+        // std::cout << std::endl;
+        this->m_rotations[i] = R.cast<float>().block<3, 3>(0, 0);
 	}
 
-	VERBOSE("Solve for rotations ... DONE!");
+	std::cout << "Solve for rotations ... DONE!" << std::endl;
 }
 
 void ARAP::SolveForVertexPositions(const std::vector<std::pair<unsigned int, Eigen::Vector3f>>& constraints)
 {
-	VERBOSE("Solve for rotations ...");
+	std::cout << "Solve for rotations ..." << std::endl;
 
 	// compute rhs
 	ComputeRightHandSide();
@@ -354,7 +383,7 @@ void ARAP::SolveForVertexPositions(const std::vector<std::pair<unsigned int, Eig
 		this->m_verticesDeformed[i] = Eigen::Vector3f(x(i), y(i), z(i));
 	}
 
-	VERBOSE("Solve for rotations ... DONE!");
+	std::cout << "Solve for rotations ... DONE!" << std::endl;
 }
 
 void ARAP::ProgressBar(std::string titel, float progress)

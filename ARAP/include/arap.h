@@ -1,8 +1,9 @@
 #pragma once
 
-#include "../include/Eigen.h"
+// #include "../include/Eigen.h"
+#include "Eigen/Sparse"
 #include "../include/mesh.h"
-#include "../include/ProcrustesAligner.h"
+// #include "../include/ProcrustesAligner.h"
 
 //#define USE_DENSE_SYSTEM_MATRIX
 
@@ -58,5 +59,5 @@ private:
 	Eigen::VectorXf m_rhsY;
 	Eigen::VectorXf m_rhsZ;
 
-	ProcrustesAligner m_procrustesAligner;
+	// ProcrustesAligner m_procrustesAligner;
 };
