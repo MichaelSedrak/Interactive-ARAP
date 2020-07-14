@@ -22,7 +22,7 @@ class Solver {
         bool PrecomputeNeighbors();
 
         // Precomputes the weights used in the paper
-        bool PrecomputeCotangentWeights();
+        void PrecomputeCotangentWeights();
 
         // Compute Cholesky factorization of L
         bool PrecomputeLaplace-Beltrami();
@@ -49,14 +49,15 @@ class Solver {
         int maxIter;
 
         // TODO
-        // vertices
-        // faces
         // free
         // fixed
         // cholesky solver
         // rotations
         // L
 
+        Eigen::MatrixXd vertices;
+        Eigen::MatrixXd faces;
+        Eigen::SparseMatrix<double> weights;
 }
 
 
