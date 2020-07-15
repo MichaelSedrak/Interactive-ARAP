@@ -6,8 +6,9 @@ void Solver::PrecomputeCotangentWeights(){
     // weights is a symetric matrix for vertex tuples
     weights.resize(vertices.rows(), vertices.rows());
     // Not expensive but equivalent to if statements
-    Eigen::MatrixXi map(3, 2);
-    map << 1, 2, 0, 2, 0, 1;
+    // now declared in private: solver.h
+    // Eigen::MatrixXi map(3, 2);
+    // map << 1, 2, 0, 2, 0, 1;
     for(int i = 0; i < faces.rows(); i++){
         Eigen::Vector3d cot = ComputeFaceCotangent(i);
         for(int j = 0; j < 3; j++){
@@ -66,6 +67,21 @@ Eigen::Vector3d Solver::ComputeFaceCotangent(int face){
     cot(2) = (v1 - v3).dot(v2 - v3) / ((v1 - v3).cross(v2 - v3).norm());
 
     return cot;
+}
+
+// Energy function - as scalar
+// This is the implementation of equation (3) of the paper
+double Solver::ComputeEnergyFunction(){
+    double energy = 0.0;
+    for(int face = 0; face < faces.rows(); face++){
+        for(int edge = 0; edge < 3; edge++){
+            double perEdgeEnergy = 0.0;
+            int i = faces(face, map(edge, 0));
+            int j = faces(face, map(edge, 1));
+            // TODO Can we simply calculate with column vectors?
+            
+        }
+    } 
 }
 
 

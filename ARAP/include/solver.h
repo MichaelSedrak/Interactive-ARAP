@@ -30,14 +30,7 @@ class Solver {
         // Solve ARAP
         void Solve(/* TODO */);
 
-        // TODO
-        //
-        // GetFaces()
-        // GetFreeVertices()
-        // GetFixedVertices()
-        // GetFreeIndices()
-        // GetFixedIndices()
-    private:
+   private:
 
         // Cotangent for every vertex in triangle
         Eigen::Vector3d ComputeFaceCotangent(int face);
@@ -55,9 +48,25 @@ class Solver {
         // rotations
         // L
 
+        // vertices of the mesh
         Eigen::MatrixXd vertices;
+
+        // vertices of the mesh after ARAP is applied
+        Eigen::MatrixXd vertTransformed;
+
+        // faces of the mesh
         Eigen::MatrixXd faces;
+
+        // rotation matrices, stored row-wise
+        Eigen::MatrixXd rotations;
+
+        // contangent weight matrix 
         Eigen::SparseMatrix<double> weights;
+
+        // Triangle index map
+        Eigen::MatrixXi map(3, 2);
+        map << 1, 2, 0, 2, 0, 1;
+
 }
 
 
