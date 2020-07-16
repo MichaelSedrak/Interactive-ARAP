@@ -1,38 +1,39 @@
 #include "../include/solver.h"
 
+// Solve ARAP
+void Solver::Solve(/* TODO */){
+    // TODO
+}
+
+// Constructor - sets vertices, faces, max number of iterations, constraints
+Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXd& f, int iter = 5){
+        vertices = v;
+        faces = f;
+        maxIter = iter;
+        map << 1, 2, 0, 2, 0, 1;
+
+        // All vertices are "free" with initialization
+        constraints.resize(vertices.rows(), 1);
+        constraints.setZero();
+
+        std::cout << "The matrix vertices is of size "
+        << vertices.rows() << "x" << vertices.cols() << std::endl;
+
+        std::cout << "The matrix faces is of size "
+        << faces.rows() << "x" << faces.cols() << std::endl;
+
+        std::cout << "The matrix constraints is of size "
+        << constraints.rows() << "x" << constraints.cols() << std::endl;
+}
+
 // Precomputes the weights used in the paper
 // http://rodolphe-vaillant.fr/?e=69
 void Solver::PrecomputeCotangentWeights(){
     // weights is a symetric matrix for vertex tuples
     weights.resize(vertices.rows(), vertices.rows());
-    // Not expensive but equivalent to if statements
-    // now declared in private: solver.h
-    // Eigen::MatrixXi map(3, 2);
-    // map << 1, 2, 0, 2, 0, 1;
     for(int i = 0; i < faces.rows(); i++){
         Eigen::Vector3d cot = ComputeFaceCotangent(i);
         for(int j = 0; j < 3; j++){
-            /*
-             * Too expensive
-            int oppositeEdgeVertex1 = -1;
-            int oppositeEdgeVertex2 = -1;
-            if(j == 0){
-                oppositeEdgeVertex1 = 1;
-                oppositeEdgeVertex2 = 2;
-            }
-            if(j == 1){
-                oppositeEdgeVertex1 = 0;
-                oppositeEdgeVertex2 = 2;
-            }
-            if(j == 2){
-                oppositeEdgeVertex1 = 0;
-                oppositeEdgeVertex2 = 1;
-            }
-            if(oppositeEdgeVertex1 == -1 || oppositeEdgeVertex2 == -1){
-                std::cout << "Problem in weight precomputation" << std::endl;
-                return false;
-            }
-            */
 
             // https://wikimedia.org/api/rest_v1/media/math/render/svg/8231849c9a676c7dc50c5ce348de162a19e411b2
             // Edge obviously exists
@@ -59,6 +60,7 @@ Eigen::Vector3d Solver::ComputeFaceCotangent(int face){
     Eigen::Vector3d v2 = vertices.row(faces(face, 1));
     Eigen::Vector3d v3 = vertices.row(faces(face, 2));
 
+    // TODO / epsilon + rest
     // cot at v1
     cot(0) = (v2 - v1).dot(v3 - v1) / ((v2 - v1).cross(v3 - v1).norm());
     // cot at v2
@@ -75,13 +77,15 @@ double Solver::ComputeEnergyFunction(){
     double energy = 0.0;
     for(int face = 0; face < faces.rows(); face++){
         for(int edge = 0; edge < 3; edge++){
-            double perEdgeEnergy = 0.0;
             int i = faces(face, map(edge, 0));
             int j = faces(face, map(edge, 1));
-            // TODO Can we simply calculate with column vectors?
-            
+            // Maybe some more debug needed
+            Eigen::Vector3d deltaPLine = (vertTransformed.row(i) - vertTransformed.row(j)).transpose(); 
+            Eigen::Vector3d deltaP = (vertices.row(i) - vertices.row(j)).transpose();
+            Eigen::Matrix3d rotI = rotations.block<3, 3>(i * 3, 0);
+            Eigen::Vector3d leastSquares = (deltaPLine - (rotI * deltaP)).squaredNorm();
+            energy += weights.coeff(i, j) * leastSquares;
         }
     } 
+    return energy;
 }
-
-

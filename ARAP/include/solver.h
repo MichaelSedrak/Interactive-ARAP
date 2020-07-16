@@ -3,23 +3,12 @@
 #include "Eigen/Dense"
 #include "Eigen/Sparse"
 // TODO Eigen Cholesky
-#include "../include/mesh.h"
 
 class Solver {
     public:
 
         // Solver constructor
-        Solver();
-        
-        // Loads the Mesh object
-        // Needed for: vertices, faces, constaints
-        // TODO Add constraint bool to every vertex in Mesh class
-        // 0 - free
-        // 1 - fixed
-        bool LoadData(const Mesh& baseMesh);
-        
-        // Precompute 1-Ring-Neigborhood
-        bool PrecomputeNeighbors();
+        Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXd& f, int iter = 5);
 
         // Precomputes the weights used in the paper
         void PrecomputeCotangentWeights();
@@ -41,12 +30,11 @@ class Solver {
         // max number of optimization iterations
         int maxIter;
 
-        // TODO
-        // free
-        // fixed
         // cholesky solver
-        // rotations
-        // L
+        // TODO 
+
+        // constraints, i.e. free = 0, fixed = 1
+        Eigen::MatrixXd constraints;
 
         // vertices of the mesh
         Eigen::MatrixXd vertices;
@@ -65,7 +53,6 @@ class Solver {
 
         // Triangle index map
         Eigen::MatrixXi map(3, 2);
-        map << 1, 2, 0, 2, 0, 1;
 
 }
 

@@ -1,43 +1,36 @@
 #include "../include/mesh.h"
 #include <fstream>
 #include <iostream>
-#include <vector>
 
 void Mesh::clear(){
-	m_vertices.clear();
-	m_triangles.clear();
+    // Deallocate memory
+	m_vertices.resize(0, 0);
+	m_faces.resize(0, 0);
 } 
 
-const std::vector<float>& Mesh::getVertices() const{
+const Eigen::MatrixXd Mesh::getVertices() const{
     return m_vertices;
 } 
 
-const std::vector<int>& Mesh::getTriangles() const{
-    return m_triangles;
+const Eigen::MatrixXd Mesh::getFaces() const{
+    return m_faces;
 } 
 
-void Mesh::transform(const float& transformation){
-    // TODO
-}
-
 const int Mesh::getVertexCount() const{
-	return m_vertices.size() / 3;
-}
-const int Mesh::getTriangleCount() const{
-	return m_triangles.size() / 3;
+	return m_vertices.rows();
 }
 
-void Mesh::setVertexAtIndex(int i, float x, float y, float z) {
-    m_vertices[i * 3] = x;
-    m_vertices[(i * 3) + 1] = y;
-    m_vertices[(i * 3) + 2] = z;
+const int Mesh::getFacesCount() const{
+	return m_faces.rows();
+}
+
+void Mesh::setVertexAtIndex(int i, double x, double y, double z) {
+    m_vertices.row(i) << x, y, z;
 }
 
 bool Mesh::loadMesh(const std::string& filename){
+    std::cout << ".off file: loading..." << std::endl;
     // Read off file (Important: Only .off files are supported).
-	m_vertices.clear();
-	m_triangles.clear();
-
 	std::ifstream file(filename);
 	if (!file.is_open()) {
 		std::cout << "Mesh file wasn't read successfully." << std::endl;
@@ -54,17 +47,15 @@ bool Mesh::loadMesh(const std::string& filename){
 	unsigned int numE = 0;
 	file >> numV >> numP >> numE;
 
-	m_vertices.reserve(numV);
-	m_triangles.reserve(numP);
+    m_vertices.resize(numV, 3);
+    m_faces.resize(numP, 3);
 
     if (std::string(string1).compare("OFF") == 0) {
 	    // Read vertices.
 		for (unsigned int i = 0; i < numV; i++) {
 			float x, y, z;
             file >> x >> y >> z;
-			m_vertices.push_back(x);
-			m_vertices.push_back(y);
-			m_vertices.push_back(z);
+            m_vertices.row(i) << x, y, z;
 		}
 
         // Read faces (i.e. triangles).
@@ -77,16 +68,14 @@ bool Mesh::loadMesh(const std::string& filename){
             }
             int idx0, idx1, idx2;
     		file >> idx0 >> idx1 >> idx2;
-    		m_triangles.push_back(idx0);
-    		m_triangles.push_back(idx1);
-    		m_triangles.push_back(idx2);
+            m_faces.row(i) << idx0, idx1, idx2;
     	}
 	}
 	else {
 		std::cout << "Incorrect mesh file type." << std::endl;
 		return false;
 	}
-
+    std::cout << ".off file: loading done." << std::endl;
 	return true;
 }
 
@@ -97,16 +86,16 @@ bool Mesh::writeMesh(const std::string& filename){
 
 	// Write header.
 	outFile << "OFF" << std::endl;
-	outFile << (m_vertices.size() / 3) << " " << (m_triangles.size() / 3) << " 0" << std::endl;
+	outFile << m_vertices.rows() << " " << m_faces.rows() << " 0" << std::endl;
 
 	// Save vertices.
-	for (unsigned int i = 0; i < m_vertices.size(); i += 3) {
-		outFile << m_vertices[i] << " " << m_vertices[i+1] << " " << m_vertices[i+2] << std::endl;
+	for (unsigned int i = 0; i < m_vertices.rows(); i++) {
+		outFile << m_vertices(i, 0) << " " << m_vertices(i, 1) << " " << m_vertices(i, 2) << std::endl;
 	}
 
 	// Save faces.
-	for (unsigned int i = 0; i < m_triangles.size(); i += 3) {
-		outFile << "3 " << m_triangles[i] << " " << m_triangles[i+1] << " " << m_triangles[i+2] << std::endl;
+	for (unsigned int i = 0; i < m_faces.rows(); i++) {
+		outFile << "3 " << m_faces(i, 0) << " " << m_faces(i, 1) << " " << m_faces(i, 2) << std::endl;
 	}
 
 	// Close file.
@@ -117,17 +106,15 @@ bool Mesh::writeMesh(const std::string& filename){
 void Mesh::verboseOutput(){
     // Write header.
     std::cout << "OFF" << std::endl;
-    std::cout << (m_vertices.size() / 3) << " " << (m_triangles.size() / 3) << " 0" << std::endl;
+    std::cout << m_vertices.rows() << " " << m_faces.rows() << " 0" << std::endl;
 
 	// Save vertices.
-	for (unsigned int i = 0; i < m_vertices.size(); i += 3) {
-        std::cout << m_vertices[i] << " " << m_vertices[i+1] << " " << m_vertices[i+2] << std::endl;
+	for (unsigned int i = 0; i < m_vertices.rows(); i++) {
+        std::cout << m_vertices(i, 0) << " " << m_vertices(i, 1) << " " << m_vertices(i, 2) << std::endl;
 	}
 
 	// Save faces.
-	for (unsigned int i = 0; i < m_triangles.size(); i += 3) {
-        std::cout << "3 " << m_triangles[i] << " " << m_triangles[i+1] << " " << m_triangles[i+2] << std::endl;
+	for (unsigned int i = 0; i < m_triangles.rows(); i++) {
+        std::cout << "3 " << m_faces(i, 0) << " " << m_faces(i, 1) << " " << m_faces(i, 2) << std::endl;
 	}
-
-
 }
