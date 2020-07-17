@@ -57,6 +57,10 @@ class Solver {
         // Triangle index map
         Eigen::MatrixXi map(3, 2);
 
+        // Covariance vector
+        // Eigen::MatrixXd covarianceMatrices;
+        std::vector<Eigen::Matrix3d> covarianceMatrices;
+
 }
 
 

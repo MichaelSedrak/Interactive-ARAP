@@ -7,10 +7,9 @@ void Solver::Solve(/* TODO */){
 
     //solving iterations
     for (int k = 0; k < maxIter; k++) {
-        //set up covariance matrix S
-        std::vector<Eigen::Matrix3d> covarianceMatrices;
-        covarianceMatrices.resize(vertices.rows(), Eigen::Matrix3d::Zero());
-
+        // set up covariance matrix S
+        // This is equation (5) from the paper 
+        
         for (int face = 0; face < faces.rows(); face++) {
             for (int edge = 0; edge < 3; edge++) {
                 int i = faces(face, map(edge, 0));
@@ -25,6 +24,8 @@ void Solver::Solve(/* TODO */){
                 Eigen::Vector3d e_ij = v_i - v_j;
                 Eigen::Vector3d e_ij_prime = v_transformed_i - v_transformed_j;
 
+                // this is no longer a vector
+                // covarianceMatrices.block<3, 3>(i * 3, 0) += weights.coeff(i, j) * e_ij * e_ij_prime.transpose();
                 covarianceMatrices[i] += weights.coeff(i, j) * e_ij * e_ij_prime.transpose();
             }
         }
@@ -32,12 +33,15 @@ void Solver::Solve(/* TODO */){
         //solve for rotation
 
         //TODO Change code to use the row wise rotation matrix storage instead of vector of matrices
+        // still .clear() ?
         rotations.clear();
-        rotations.resize(vertices.rows(), Eigen::Matrix3d::Identity());
         for (int i = 0; i < vertices.rows(); i++) {
             JacobiSVD<MatrixXf> svd(covarianceMatrices[i], ComputeThinU | ComputeThinV);
             Matrix3f u = svd.matrixU();
             Matrix3f v = svd.matrixV();
+
+            // This is equation (6) from the paper
+            // rotations.block<3, 3>(i * 3, 0) = v * u.transpose();
             rotations[i] = v * u.transpose();
         }
 
@@ -56,6 +60,9 @@ void Solver::Solve(/* TODO */){
 
                 if (constraints.row(i) == 1)
                     continue;
+                // rhs.row(i) += (weights.coeff(i, j) / 2.0 * (rotations.block<3, 3>(i * 3, 0)  
+                //               + rotations.block<3, 3>(j * 3, 0))
+                //               * (vertice.row(i) - vertices.row(j)).transpose()).transpose();
                 rhs.row(i) += (weights.coeff(i, j) / 2.0 * (rotations[i] + rotations[j]) * (vertice.row(i) - vertices.row(j)).transpose()).transpose();
             }
         }
@@ -76,6 +83,23 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXd& f, int iter = 5)
         constraints.resize(vertices.rows(), 1);
         constraints.setZero();
 
+        // resize covariance matrix to match number of vertices
+        // TODO this is not a vector
+        // covarianceMatrices.resize(vertices.rows() * 3, 3);
+        // for(int i = 0; i < vertices.rows(); i++){
+        //      covarianceMatrices.block<3, 3>(i * 3, 0) = Eigen::Matrix3d::Zero(); 
+        // }
+
+        covarianceMatrices.resize(vertices.rows(), Eigen::Matrix3d::Zero());
+
+        // resize rotation matrix to match number of vertices
+        // TODO this is not a vector
+        // rotations.resize(vertices.rows() * 3, 3);
+        // for(int i = 0; i < vertices.rows(); i++){
+        //      rotaions.block<3, 3>(i * 3, 0) = Eigen::Matrix3d::Identity(); 
+        // }
+        rotations.resize(vertices.rows(), Eigen::Matrix3d::Identity());
+
         std::cout << "The matrix vertices is of size "
         << vertices.rows() << "x" << vertices.cols() << std::endl;
 
@@ -84,10 +108,18 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXd& f, int iter = 5)
 
         std::cout << "The matrix constraints is of size "
         << constraints.rows() << "x" << constraints.cols() << std::endl;
+
+        std::cout << "The matrix covarianceMatrices is of size "
+        << covarianceMatrices.rows() << "x" << covarianceMatrices.cols() << std::endl;
+
+        std::cout << "The matrix rotations is of size "
+        << rotations.rows() << "x" << rotations.cols() << std::endl;
+
 }
 
 bool Solver::PrecomputeLaplaceBeltrami() {
     //TODO check wether this is the correct interpretation of the paper
+    // L = weights * -1.0
     L = weights *= -1.0;
 }
 
