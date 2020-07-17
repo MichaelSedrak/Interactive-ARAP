@@ -14,7 +14,7 @@ class Solver {
         void PrecomputeCotangentWeights();
 
         // Compute Cholesky factorization of L
-        bool PrecomputeLaplace-Beltrami();
+        bool PrecomputeLaplaceBeltrami();
 
         // Solve ARAP
         void Solve(/* TODO */);
@@ -50,6 +50,9 @@ class Solver {
 
         // contangent weight matrix 
         Eigen::SparseMatrix<double> weights;
+
+        // Laplace Matrix 
+        Eigen::SparseMatrix<double> L;
 
         // Triangle index map
         Eigen::MatrixXi map(3, 2);

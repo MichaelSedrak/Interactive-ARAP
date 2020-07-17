@@ -13,7 +13,7 @@ int main()
 	const std::string filenameSource = std::string("../meshes/armadillo_1k.off");
 	Mesh testMesh;
 
-	if (!testMesh.loadMesh(filenameSource)) {
+	testMesh.loadMesh(filenameSource)) {
 		std::cout << "Mesh file wasn't read successfully at location: " << filenameSource << std::endl;
 		return -1;
 	}
@@ -21,19 +21,14 @@ int main()
 	// testMesh.verboseOutput();
 
 	//init ARAP module
-	Solver arapSolver;
+	Solver arapSolver = new Solver(testMesh.getVertices(), testMesh.getFaces());
 
-	arapSolver.LoadData(testMesh);
-
-
-	// Precompute 1-Ring-Neigborhood
-	arapSolver.PrecomputeNeighbors();
 
 	// Precomputes the weights used in the paper
 	arapSolver.PrecomputeCotangentWeights();
 
 	// Compute Cholesky factorization of L
-	arapSolver.PrecomputeLaplace-Beltrami();
+	arapSolver.PrecomputeLaplaceBeltrami()();
 
 	/*
 	//Setup Constraints
@@ -50,6 +45,9 @@ int main()
 	//TODO
 	//Mesh deformedMesh = arapSolver.SOMEHOW_GET_MESH();
 	//deformedMesh.writeMesh("output.off");
+
+
+	arapSolver.~Solver();
 
 	return 0;
 }
