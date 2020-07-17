@@ -8,11 +8,11 @@ void Mesh::clear(){
 	m_triangles.clear();
 } 
 
-const std::vector<float>& Mesh::getVertices() const{
+std::vector<float>& Mesh::getVertices() {
     return m_vertices;
 } 
 
-const std::vector<int>& Mesh::getTriangles() const{
+std::vector<int>& Mesh::getTriangles() {
     return m_triangles;
 } 
 

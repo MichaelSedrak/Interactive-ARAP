@@ -9,8 +9,8 @@ public:
     
 	void clear(); 
 
-    const std::vector<float>& getVertices() const;
-    const std::vector<int>& getTriangles() const;
+    std::vector<float>& getVertices();
+    std::vector<int>& getTriangles();
 
     void transform(const float& transformation);
 	bool loadMesh(const std::string& filename);
