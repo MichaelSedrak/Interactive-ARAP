@@ -13,7 +13,7 @@ int main()
 	const std::string filenameSource = std::string("../meshes/armadillo_1k.off");
 	Mesh testMesh;
 
-	testMesh.loadMesh(filenameSource)) {
+	if (!testMesh.loadMesh(filenameSource)) {
 		std::cout << "Mesh file wasn't read successfully at location: " << filenameSource << std::endl;
 		return -1;
 	}
@@ -44,9 +44,6 @@ int main()
 	testMesh.setVertices(arapSolver.GetTransformedVertices());
 	testMesh.verboseOutput();
 	testMesh.writeMesh("output.off");
-
-
-	arapSolver.~Solver();
 
 	return 0;
 }

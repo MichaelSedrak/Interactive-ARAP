@@ -11,7 +11,7 @@ public:
 	void clear(); 
 
     const Eigen::MatrixXd getVertices() const;
-    const Eigen::MatrixXd getFaces() const;
+    const Eigen::MatrixXi getFaces() const;
 
     void setVertices(const Eigen::MatrixXd& v);
 
@@ -30,6 +30,6 @@ private:
     Eigen::MatrixXd m_vertices;
 
     // faces of the mesh
-    Eigen::MatrixXd m_faces;
+    Eigen::MatrixXi m_faces;
 };
 

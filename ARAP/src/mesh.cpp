@@ -12,7 +12,7 @@ const Eigen::MatrixXd Mesh::getVertices() const{
     return m_vertices;
 } 
 
-const Eigen::MatrixXd Mesh::getFaces() const{
+const Eigen::MatrixXi Mesh::getFaces() const{
     return m_faces;
 } 
 
@@ -118,7 +118,7 @@ void Mesh::verboseOutput(){
 	}
 
 	// Save faces.
-	for (unsigned int i = 0; i < m_triangles.rows(); i++) {
+	for (unsigned int i = 0; i < m_faces.rows(); i++) {
         std::cout << "3 " << m_faces(i, 0) << " " << m_faces(i, 1) << " " << m_faces(i, 2) << std::endl;
 	}
 }

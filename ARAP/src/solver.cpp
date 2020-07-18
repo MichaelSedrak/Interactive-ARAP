@@ -1,10 +1,12 @@
+#include <iostream>
 #include "../include/solver.h"
 
 // Constructor - sets vertices, faces, max number of iterations, constraints
-Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXd& f, int iter = 5){
+Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         vertices = v;
         faces = f;
         maxIter = iter;
+        map.resize(3, 2);
         map << 1, 2, 0, 2, 0, 1;
 
         // All vertices are "free" with initialization
@@ -36,9 +38,6 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXd& f, int iter = 5)
         std::cout << "The matrix constraints is of size "
         << constraints.rows() << "x" << constraints.cols() << std::endl;
 
-        std::cout << "The matrix covarianceMatrices is of size "
-        << covarianceMatrices.rows() << "x" << covarianceMatrices.cols() << std::endl;
-
         std::cout << "The matrix rotations is of size "
         << rotations.rows() << "x" << rotations.cols() << std::endl;
 
@@ -59,11 +58,11 @@ void Solver::Solve() {
                 int i = faces(face, map(edge, 0));
                 int j = faces(face, map(edge, 1));
 
-                v_i = vertices.row(i);
-                v_j = vertices.row(j);
+                Eigen::Vector3d v_i = vertices.row(i);
+                Eigen::Vector3d v_j = vertices.row(j);
 
-                v_transformed_i = vertTransformed.row(i);
-                v_transformed_j = vertTransformed.row(j);
+                Eigen::Vector3d v_transformed_i = vertTransformed.row(i);
+                Eigen::Vector3d v_transformed_j = vertTransformed.row(j);
 
                 Eigen::Vector3d e_ij = v_i - v_j;
                 Eigen::Vector3d e_ij_prime = v_transformed_i - v_transformed_j;
@@ -74,9 +73,9 @@ void Solver::Solve() {
 
         //solve for rotation
         for (int i = 0; i < vertices.rows(); i++) {
-            JacobiSVD<MatrixXf> svd(covarianceMatrices[i], ComputeThinU | ComputeThinV);
-            Matrix3f u = svd.matrixU();
-            Matrix3f v = svd.matrixV();
+            Eigen::JacobiSVD<Eigen::MatrixXf> svd(covarianceMatrices.block<3, 3>(i * 3, 0), Eigen::ComputeThinU | Eigen::ComputeThinV);
+            Eigen::Matrix3f u = svd.matrixU();
+            Eigen::Matrix3f v = svd.matrixV();
 
             // This is equation (6) from the paper
             rotations.block<3, 3>(i * 3, 0) = v * u.transpose();
@@ -84,9 +83,9 @@ void Solver::Solve() {
 
         //compute right hand side
         Eigen::MatrixXd rhs = Eigen::MatrixXd::Zero(vertices.rows(), 3);
-        for (int i = 0; i < constraints.rows()) {
-            if (constraints.row(i) == 1) {
-                rhs.row(i) = (L * vertices.row(i).transpose()).transpose();
+        for (int i = 0; i < constraints.rows(); i++) {
+            if (constraints(i, 0) == 1) {
+                rhs.row(i) = (weights * -1.0 * vertices.row(i).transpose()).transpose();
             }
         }
 
@@ -95,27 +94,20 @@ void Solver::Solve() {
                 int i = faces(face, map(edge, 0));
                 int j = faces(face, map(edge, 1));
 
-                if (constraints.row(i) == 1)
+                if (constraints(i, 0) == 1)
                     continue;
                 rhs.row(i) += (weights.coeff(i, j) / 2.0 * (rotations.block<3, 3>(i * 3, 0)
                     + rotations.block<3, 3>(j * 3, 0))
-                    * (vertice.row(i) - vertices.row(j)).transpose()).transpose();
+                    * (vertices.row(i) - vertices.row(j)).transpose()).transpose();
             }
         }
 
         //solve for updated positions
-        MatrixXd x;
+        Eigen::MatrixXd x;
         Eigen::SimplicialLLT<Eigen::SparseMatrix<double> > solver;
         solver.compute(weights*-1.0);
-        if (solver.info() != Success) {
-            // decomposition failed
-            return;
-        }
+
         x = solver.solve(rhs);
-        if (solver.info() != Success) {
-            // solving failed
-            return;
-        }
 
         for (int i = 0; i < vertices.rows(); i++) {
             //TODO leave out update of constraint vertices
@@ -126,11 +118,11 @@ void Solver::Solve() {
 
 void Solver::SetConstraint(int idx, bool fixed, const Eigen::Vector3d& pos) {
     if (fixed) {
-        constraints.row(idx) = 1;
-        vertTransformed.row(i) = pos;
+        constraints(idx, 0) = 1;
+        vertTransformed.row(idx) = pos;
     }
     else {
-        constraints.row(idx) = 0;
+        constraints(idx, 0) = 0;
     }
 }
 
@@ -145,12 +137,12 @@ void Solver::PrecomputeCotangentWeights(){
 
             // https://wikimedia.org/api/rest_v1/media/math/render/svg/8231849c9a676c7dc50c5ce348de162a19e411b2
             // Edge obviously exists
-            weights.coeffRef(faces(i, map(j, 0)), face(i, map(j, 1))) += (cot(j) / 2.0); 
-            weights.coeffRef(faces(i, map(j, 1)), face(i, map(j, 0))) += (cot(j) / 2.0); 
+            weights.coeffRef(faces(i, map(j, 0)), faces(i, map(j, 1))) += (cot(j) / 2.0); 
+            weights.coeffRef(faces(i, map(j, 1)), faces(i, map(j, 0))) += (cot(j) / 2.0); 
 
             // "i = j"
-            weights.coeffRef(faces(i, map(j, 0)), face(i, map(j, 0))) -= (cot(j) / 2.0); 
-            weights.coeffRef(faces(i, map(j, 1)), face(i, map(j, 1))) -= (cot(j) / 2.0); 
+            weights.coeffRef(faces(i, map(j, 0)), faces(i, map(j, 0))) -= (cot(j) / 2.0); 
+            weights.coeffRef(faces(i, map(j, 1)), faces(i, map(j, 1))) -= (cot(j) / 2.0); 
 
             // else 0 -> already satisfied with sparse matrix
         }
@@ -191,13 +183,14 @@ double Solver::ComputeEnergyFunction(){
             Eigen::Vector3d deltaPLine = (vertTransformed.row(i) - vertTransformed.row(j)).transpose(); 
             Eigen::Vector3d deltaP = (vertices.row(i) - vertices.row(j)).transpose();
             Eigen::Matrix3d rotI = rotations.block<3, 3>(i * 3, 0);
-            Eigen::Vector3d leastSquares = (deltaPLine - (rotI * deltaP)).squaredNorm();
+            //Eigen::Vector3d leastSquares = (deltaPLine - (rotI * deltaP)).squaredNorm();
+            double leastSquares = (deltaPLine - (rotI * deltaP)).squaredNorm();
             energy += weights.coeff(i, j) * leastSquares;
         }
     } 
     return energy;
 }
 
-Eigen::MatrixXd GetTransformedVertices() {
+Eigen::MatrixXd Solver::GetTransformedVertices() {
     return vertTransformed;
 }
