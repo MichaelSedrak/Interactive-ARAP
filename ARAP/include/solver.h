@@ -53,6 +53,8 @@ private:
     // contangent weight matrix 
     Eigen::SparseMatrix<double> weights;
 
+    // Covariance matrices
+    Eigen::MatrixXd covarianceMatrices;
 
     // Triangle index map
     Eigen::MatrixXi map;

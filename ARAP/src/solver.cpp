@@ -13,21 +13,23 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         constraints.resize(vertices.rows(), 1);
         constraints.setZero();
 
+        // vertTransformed initialization
+        vertTransformed.resize(vertices.rows(), vertices.cols());
+        vertTransformed.setZero();
+
         // resize covariance matrix to match number of vertices
-        // TODO this is not a vector
-        // covarianceMatrices.resize(vertices.rows() * 3, 3);
-        // for(int i = 0; i < vertices.rows(); i++){
-        //      covarianceMatrices.block<3, 3>(i * 3, 0) = Eigen::Matrix3d::Zero(); 
-        // }
+        covarianceMatrices.resize(vertices.rows() * 3, 3);
+        covarianceMatrices.setZero();
+        for(int i = 0; i < vertices.rows(); i++){
+             covarianceMatrices.block<3, 3>(i * 3, 0) = Eigen::Matrix3d::Zero(); 
+        }
 
         // resize rotation matrix to match number of vertices
-        // TODO this is not a vector
         rotations.resize(vertices.rows() * 3, 3);
         rotations.setZero();
-        // for(int i = 0; i < vertices.rows(); i++){
-        //      rotaions.block<3, 3>(i * 3, 0) = Eigen::Matrix3d::Identity(); 
-        // }
-        //rotations.resize(vertices.rows(), Eigen::Matrix3d::Identity());
+        for(int i = 0; i < vertices.rows(); i++){
+             rotations.block<3, 3>(i * 3, 0) = Eigen::Matrix3d::Identity(); 
+        }
 
         std::cout << "The matrix vertices is of size "
         << vertices.rows() << "x" << vertices.cols() << std::endl;
