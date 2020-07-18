@@ -1,77 +1,5 @@
 #include "../include/solver.h"
 
-// Solve ARAP
-void Solver::Solve(/* TODO */){
-    //update constraints
-    //TODO
-
-    //solving iterations
-    for (int k = 0; k < maxIter; k++) {
-        // set up covariance matrix S
-        // This is equation (5) from the paper 
-        
-        for (int face = 0; face < faces.rows(); face++) {
-            for (int edge = 0; edge < 3; edge++) {
-                int i = faces(face, map(edge, 0));
-                int j = faces(face, map(edge, 1));
-
-                v_i = vertices.row(i);
-                v_j = vertices.row(j);
-
-                v_transformed_i = vertTransformed.row(i);
-                v_transformed_j = vertTransformed.row(j);
-
-                Eigen::Vector3d e_ij = v_i - v_j;
-                Eigen::Vector3d e_ij_prime = v_transformed_i - v_transformed_j;
-
-                // this is no longer a vector
-                // covarianceMatrices.block<3, 3>(i * 3, 0) += weights.coeff(i, j) * e_ij * e_ij_prime.transpose();
-                covarianceMatrices[i] += weights.coeff(i, j) * e_ij * e_ij_prime.transpose();
-            }
-        }
-
-        //solve for rotation
-
-        //TODO Change code to use the row wise rotation matrix storage instead of vector of matrices
-        // still .clear() ?
-        rotations.clear();
-        for (int i = 0; i < vertices.rows(); i++) {
-            JacobiSVD<MatrixXf> svd(covarianceMatrices[i], ComputeThinU | ComputeThinV);
-            Matrix3f u = svd.matrixU();
-            Matrix3f v = svd.matrixV();
-
-            // This is equation (6) from the paper
-            // rotations.block<3, 3>(i * 3, 0) = v * u.transpose();
-            rotations[i] = v * u.transpose();
-        }
-
-        //compute right hand side
-        Eigen::MatrixXd rhs = Eigen::MatrixXd::Zero(vertices.rows(), 3);
-        for (int i = 0; i < constraints.rows()) {
-            if (constraints.row(i) == 1) {
-                rhs.row(i) = (L * vertices.row(i).transpose()).transpose();
-            }
-        }
-
-        for (int face = 0; face < faces.rows(); face++) {
-            for (int edge = 0; edge < 3; edge++) {
-                int i = faces(face, map(edge, 0));
-                int j = faces(face, map(edge, 1));
-
-                if (constraints.row(i) == 1)
-                    continue;
-                // rhs.row(i) += (weights.coeff(i, j) / 2.0 * (rotations.block<3, 3>(i * 3, 0)  
-                //               + rotations.block<3, 3>(j * 3, 0))
-                //               * (vertice.row(i) - vertices.row(j)).transpose()).transpose();
-                rhs.row(i) += (weights.coeff(i, j) / 2.0 * (rotations[i] + rotations[j]) * (vertice.row(i) - vertices.row(j)).transpose()).transpose();
-            }
-        }
-
-        //solve for updated positions
-        //TODO
-    }
-}
-
 // Constructor - sets vertices, faces, max number of iterations, constraints
 Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXd& f, int iter = 5){
         vertices = v;
@@ -90,15 +18,14 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXd& f, int iter = 5)
         //      covarianceMatrices.block<3, 3>(i * 3, 0) = Eigen::Matrix3d::Zero(); 
         // }
 
-        covarianceMatrices.resize(vertices.rows(), Eigen::Matrix3d::Zero());
-
         // resize rotation matrix to match number of vertices
         // TODO this is not a vector
-        // rotations.resize(vertices.rows() * 3, 3);
+        rotations.resize(vertices.rows() * 3, 3);
+        rotations.setZero();
         // for(int i = 0; i < vertices.rows(); i++){
         //      rotaions.block<3, 3>(i * 3, 0) = Eigen::Matrix3d::Identity(); 
         // }
-        rotations.resize(vertices.rows(), Eigen::Matrix3d::Identity());
+        //rotations.resize(vertices.rows(), Eigen::Matrix3d::Identity());
 
         std::cout << "The matrix vertices is of size "
         << vertices.rows() << "x" << vertices.cols() << std::endl;
@@ -117,10 +44,94 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXd& f, int iter = 5)
 
 }
 
-bool Solver::PrecomputeLaplaceBeltrami() {
-    //TODO check wether this is the correct interpretation of the paper
-    // L = weights * -1.0
-    L = weights *= -1.0;
+// Solve ARAP
+void Solver::Solve() {
+    //solving iterations
+    for (int k = 0; k < maxIter; k++) {
+        // set up covariance matrix S
+        // This is equation (5) from the paper
+        Eigen::MatrixXd covarianceMatrices;
+        covarianceMatrices.resize(vertices.rows() * 3, 3);
+        covarianceMatrices.setZero();
+
+        for (int face = 0; face < faces.rows(); face++) {
+            for (int edge = 0; edge < 3; edge++) {
+                int i = faces(face, map(edge, 0));
+                int j = faces(face, map(edge, 1));
+
+                v_i = vertices.row(i);
+                v_j = vertices.row(j);
+
+                v_transformed_i = vertTransformed.row(i);
+                v_transformed_j = vertTransformed.row(j);
+
+                Eigen::Vector3d e_ij = v_i - v_j;
+                Eigen::Vector3d e_ij_prime = v_transformed_i - v_transformed_j;
+
+                covarianceMatrices.block<3, 3>(i * 3, 0) += weights.coeff(i, j) * e_ij * e_ij_prime.transpose();
+            }
+        }
+
+        //solve for rotation
+        for (int i = 0; i < vertices.rows(); i++) {
+            JacobiSVD<MatrixXf> svd(covarianceMatrices[i], ComputeThinU | ComputeThinV);
+            Matrix3f u = svd.matrixU();
+            Matrix3f v = svd.matrixV();
+
+            // This is equation (6) from the paper
+            rotations.block<3, 3>(i * 3, 0) = v * u.transpose();
+        }
+
+        //compute right hand side
+        Eigen::MatrixXd rhs = Eigen::MatrixXd::Zero(vertices.rows(), 3);
+        for (int i = 0; i < constraints.rows()) {
+            if (constraints.row(i) == 1) {
+                rhs.row(i) = (L * vertices.row(i).transpose()).transpose();
+            }
+        }
+
+        for (int face = 0; face < faces.rows(); face++) {
+            for (int edge = 0; edge < 3; edge++) {
+                int i = faces(face, map(edge, 0));
+                int j = faces(face, map(edge, 1));
+
+                if (constraints.row(i) == 1)
+                    continue;
+                rhs.row(i) += (weights.coeff(i, j) / 2.0 * (rotations.block<3, 3>(i * 3, 0)
+                    + rotations.block<3, 3>(j * 3, 0))
+                    * (vertice.row(i) - vertices.row(j)).transpose()).transpose();
+            }
+        }
+
+        //solve for updated positions
+        MatrixXd x;
+        Eigen::SimplicialLLT<Eigen::SparseMatrix<double> > solver;
+        solver.compute(weights*-1.0);
+        if (solver.info() != Success) {
+            // decomposition failed
+            return;
+        }
+        x = solver.solve(rhs);
+        if (solver.info() != Success) {
+            // solving failed
+            return;
+        }
+
+        for (int i = 0; i < vertices.rows(); i++) {
+            //TODO leave out update of constraint vertices
+            vertTransformed.row(i) = x.row(i);
+        }
+    }
+}
+
+void Solver::SetConstraint(int idx, bool fixed, const Eigen::Vector3d& pos) {
+    if (fixed) {
+        constraints.row(idx) = 1;
+        vertTransformed.row(i) = pos;
+    }
+    else {
+        constraints.row(idx) = 0;
+    }
 }
 
 // Precomputes the weights used in the paper
@@ -185,4 +196,8 @@ double Solver::ComputeEnergyFunction(){
         }
     } 
     return energy;
+}
+
+Eigen::MatrixXd GetTransformedVertices() {
+    return vertTransformed;
 }

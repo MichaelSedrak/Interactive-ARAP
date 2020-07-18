@@ -18,17 +18,14 @@ int main()
 		return -1;
 	}
 
-	// testMesh.verboseOutput();
+	//testMesh.verboseOutput();
 
 	//init ARAP module
-	Solver arapSolver = new Solver(testMesh.getVertices(), testMesh.getFaces());
+	Solver arapSolver = Solver(testMesh.getVertices(), testMesh.getFaces());
 
 
 	// Precomputes the weights used in the paper
 	arapSolver.PrecomputeCotangentWeights();
-
-	// Compute Cholesky factorization of L
-	arapSolver.PrecomputeLaplaceBeltrami()();
 
 	/*
 	//Setup Constraints
@@ -39,12 +36,14 @@ int main()
 	constraints.push_back(c0);
 	*/
 
+	//arapSolver.SetConstraint()
+
 	// Solve ARAP
 	arapSolver.Solve();
 
-	//TODO
-	//Mesh deformedMesh = arapSolver.SOMEHOW_GET_MESH();
-	//deformedMesh.writeMesh("output.off");
+	testMesh.setVertices(arapSolver.GetTransformedVertices());
+	testMesh.verboseOutput();
+	testMesh.writeMesh("output.off");
 
 
 	arapSolver.~Solver();

@@ -13,6 +13,8 @@ public:
     const Eigen::MatrixXd getVertices() const;
     const Eigen::MatrixXd getFaces() const;
 
+    void setVertices(const Eigen::MatrixXd& v);
+
     const int getVertexCount() const;
     const int getFacesCount() const;
 

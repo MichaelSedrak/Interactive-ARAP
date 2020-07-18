@@ -16,6 +16,10 @@ const Eigen::MatrixXd Mesh::getFaces() const{
     return m_faces;
 } 
 
+void Mesh::setVertices(const Eigen::MatrixXd& v) {
+	m_vertices = v;
+}
+
 const int Mesh::getVertexCount() const{
 	return m_vertices.rows();
 }

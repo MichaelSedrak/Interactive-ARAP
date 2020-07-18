@@ -17,7 +17,12 @@ class Solver {
         bool PrecomputeLaplaceBeltrami();
 
         // Solve ARAP
-        void Solve(/* TODO */);
+        void Solve();
+
+        // Set a new constraint
+        void SetConstraint(int idx, bool fixed, const Eigen::Vector3d& pos);
+
+        Eigen::MatrixXd GetTransformedVertices();
 
    private:
 
@@ -29,9 +34,6 @@ class Solver {
 
         // max number of optimization iterations
         int maxIter;
-
-        // cholesky solver
-        // TODO 
 
         // constraints, i.e. free = 0, fixed = 1
         Eigen::MatrixXd constraints;
@@ -51,16 +53,9 @@ class Solver {
         // contangent weight matrix 
         Eigen::SparseMatrix<double> weights;
 
-        // Laplace Matrix 
-        Eigen::SparseMatrix<double> L;
 
         // Triangle index map
         Eigen::MatrixXi map(3, 2);
-
-        // Covariance vector
-        // Eigen::MatrixXd covarianceMatrices;
-        std::vector<Eigen::Matrix3d> covarianceMatrices;
-
 }
 
 
