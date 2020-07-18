@@ -73,9 +73,9 @@ void Solver::Solve() {
 
         //solve for rotation
         for (int i = 0; i < vertices.rows(); i++) {
-            Eigen::JacobiSVD<Eigen::MatrixXf> svd(covarianceMatrices.block<3, 3>(i * 3, 0), Eigen::ComputeThinU | Eigen::ComputeThinV);
-            Eigen::Matrix3f u = svd.matrixU();
-            Eigen::Matrix3f v = svd.matrixV();
+            Eigen::JacobiSVD<Eigen::MatrixXd> svd(covarianceMatrices.block<3, 3>(i * 3, 0), Eigen::ComputeThinU | Eigen::ComputeThinV);
+            Eigen::Matrix3d u = svd.matrixU();
+            Eigen::Matrix3d v = svd.matrixV();
 
             // This is equation (6) from the paper
             rotations.block<3, 3>(i * 3, 0) = v * u.transpose();
