@@ -11,7 +11,7 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
 
         // All vertices are "free" with initialization
         constraints.resize(vertices.rows(), 1);
-        constraints.setZero();
+        constraints.setOnes();
 
         // vertTransformed initialization
         vertTransformed.resize(vertices.rows(), vertices.cols());
@@ -43,12 +43,23 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         std::cout << "The matrix rotations is of size "
         << rotations.rows() << "x" << rotations.cols() << std::endl;
 
+        // Precompute function calls
+        PrecomputeCotangentWeights();
+        ComputeEnergyFunction();
+
+        // Constraint testing
+        // TODO this breaks if uncommented :(
+        // Something is wrong with the rhs stuff
+        // SetConstraint(0, false);
+        // SetPosition(0, Eigen::Vector3d(0,0,0));
+
 }
 
 // Solve ARAP
 void Solver::Solve() {
     //solving iterations
     for (int k = 0; k < maxIter; k++) {
+        std::cout << "Solving iteration" << std::endl;
         // set up covariance matrix S
         // This is equation (5) from the paper
         Eigen::MatrixXd covarianceMatrices;
@@ -118,19 +129,10 @@ void Solver::Solve() {
     }
 }
 
-void Solver::SetConstraint(int idx, bool fixed, const Eigen::Vector3d& pos) {
-    if (fixed) {
-        constraints(idx, 0) = 1;
-        vertTransformed.row(idx) = pos;
-    }
-    else {
-        constraints(idx, 0) = 0;
-    }
-}
-
 // Precomputes the weights used in the paper
 // http://rodolphe-vaillant.fr/?e=69
 void Solver::PrecomputeCotangentWeights(){
+    std::cout << "Precomputing cotangent weights ..." << std::endl;
     // weights is a symetric matrix for vertex tuples
     weights.resize(vertices.rows(), vertices.rows());
     for(int i = 0; i < faces.rows(); i++){
@@ -149,6 +151,7 @@ void Solver::PrecomputeCotangentWeights(){
             // else 0 -> already satisfied with sparse matrix
         }
     }
+    std::cout << "Precomputing cotangent weights done" << std::endl;
 }
 
 // Cotangent for every vertex in triangle
@@ -176,6 +179,7 @@ Eigen::Vector3d Solver::ComputeFaceCotangent(int face){
 // Energy function - as scalar
 // This is the implementation of equation (3) of the paper
 double Solver::ComputeEnergyFunction(){
+    std::cout << "Precomputing energy function ..." << std::endl;
     double energy = 0.0;
     for(int face = 0; face < faces.rows(); face++){
         for(int edge = 0; edge < 3; edge++){
@@ -190,9 +194,28 @@ double Solver::ComputeEnergyFunction(){
             energy += weights.coeff(i, j) * leastSquares;
         }
     } 
+    std::cout << "Precomputing energy function done." << std::endl;
+    std::cout << "Initial energy: " << energy << std::endl;
     return energy;
 }
 
 Eigen::MatrixXd Solver::GetTransformedVertices() {
     return vertTransformed;
+}
+
+// Set a new constraint
+void Solver::SetConstraint(int idx, bool fixed){
+    if(fixed){
+        constraints(idx, 0) = 1; 
+    } else {
+        constraints(idx, 0) = 0;
+    }
+    std::cout << "constraint for vertex at " << idx << " set to: " << (int) fixed << std::endl;
+}
+
+// Set updated position
+void Solver::SetPosition(int idx, const Eigen::Vector3d& pos){
+    vertices.block<1, 3>(idx, 0) = pos.transpose();
+    std::cout << "position for vertex at " << idx << " set to: " << 
+    pos.x() << " "<< pos.y() << " " << pos.z() << std::endl;
 }

@@ -2,7 +2,6 @@
 
 #include "Eigen/Dense"
 #include "Eigen/Sparse"
-// TODO Eigen Cholesky
 
 class Solver {
 public:
@@ -13,24 +12,25 @@ public:
     // Precomputes the weights used in the paper
     void PrecomputeCotangentWeights();
 
-    // Compute Cholesky factorization of L
-    bool PrecomputeLaplaceBeltrami();
+    // Energy function - as scalar
+    double ComputeEnergyFunction();
+
+    // Cotangent for every vertex in triangle
+    Eigen::Vector3d ComputeFaceCotangent(int face);
 
     // Solve ARAP
     void Solve();
 
     // Set a new constraint
-    void SetConstraint(int idx, bool fixed, const Eigen::Vector3d& pos);
+    void SetConstraint(int idx, bool fixed);
 
+    // Set updated position
+    void SetPosition(int idx, const Eigen::Vector3d& pos);
+
+    // Get the solvers solution
     Eigen::MatrixXd GetTransformedVertices();
 
 private:
-
-    // Cotangent for every vertex in triangle
-    Eigen::Vector3d ComputeFaceCotangent(int face);
-
-    // Energy function - as scalar
-    double ComputeEnergyFunction();
 
     // max number of optimization iterations
     int maxIter;
