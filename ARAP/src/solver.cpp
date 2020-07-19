@@ -7,11 +7,11 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         faces = f;
         maxIter = iter;
         map.resize(3, 2);
-        map << 1, 2, 0, 2, 0, 1;
+        map << 1, 2, 2, 0, 0, 1;
 
         // All vertices are "free" with initialization
         constraints.resize(vertices.rows(), 1);
-        constraints.setOnes();
+        constraints.setZero();
 
         // vertTransformed initialization
         vertTransformed.resize(vertices.rows(), vertices.cols());
@@ -109,21 +109,23 @@ void Solver::Solve() {
 
                 if (constraints(i, 0) == 1)
                     continue;
-                rhs.row(i) += (weights.coeff(i, j) / 2.0 * (rotations.block<3, 3>(i * 3, 0)
+                rhs.row(i) += weights.coeff(i, j) / 2.0 * ((rotations.block<3, 3>(i * 3, 0)
                     + rotations.block<3, 3>(j * 3, 0))
                     * (vertices.row(i) - vertices.row(j)).transpose()).transpose();
             }
         }
 
-        //solve for updated positions
         Eigen::MatrixXd x;
-        Eigen::SimplicialLLT<Eigen::SparseMatrix<double> > solver;
-        solver.compute(weights*-1.0);
-
+        Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
+        
+        solver.compute(weights * -1.0);
         x = solver.solve(rhs);
 
+        std::cout << x << std::endl;
         for (int i = 0; i < vertices.rows(); i++) {
-            //TODO leave out update of constraint vertices
+            if (constraints(i, 0) == 1)
+                continue;
+
             vertTransformed.row(i) = x.row(i);
         }
     }
@@ -133,6 +135,7 @@ void Solver::Solve() {
 // http://rodolphe-vaillant.fr/?e=69
 void Solver::PrecomputeCotangentWeights(){
     std::cout << "Precomputing cotangent weights ..." << std::endl;
+    
     // weights is a symetric matrix for vertex tuples
     weights.resize(vertices.rows(), vertices.rows());
     for(int i = 0; i < faces.rows(); i++){
@@ -172,7 +175,7 @@ Eigen::Vector3d Solver::ComputeFaceCotangent(int face){
     cot(1) = (v1 - v2).dot(v3 - v2) / ((v1 - v2).cross(v3 - v2).norm());
     // cot at v3
     cot(2) = (v1 - v3).dot(v2 - v3) / ((v1 - v3).cross(v2 - v3).norm());
-
+    
     return cot;
 }
 
