@@ -9,7 +9,9 @@
 int main()
 {
 	//load mesh
-	const std::string filenameSource = std::string("../meshes/armadillo_1k.off");
+	//const std::string filenameSource = std::string("../meshes/armadillo_1k.off");
+	const std::string filenameSource = std::string("../meshes/square.off");
+
 	Mesh testMesh;
 
 	if (!testMesh.loadMesh(filenameSource)) {
@@ -28,7 +30,7 @@ int main()
 
 	testMesh.setVertices(arapSolver.GetTransformedVertices());
     // Only uncomment if you enjoy scrolling
-	// testMesh.verboseOutput();
+	//testMesh.verboseOutput();
 	testMesh.writeMesh("output.off");
 
 	return 0;

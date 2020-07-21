@@ -2,6 +2,7 @@
 
 #include "Eigen/Dense"
 #include "Eigen/Sparse"
+//#include "Eigen/CholmodSupport"
 
 class Solver {
 public:
@@ -33,13 +34,13 @@ public:
 private:
 
     // Remove row at idx
-    void removeRow(Eigen::SparseMatrix<double>& matrix, unsigned int rowToRemove);
+    void removeRow(Eigen::MatrixXd& matrix, unsigned int rowToRemove);
 
     // Remove col at idx
-    void removeColumn(Eigen::SparseMatrix<double>& matrix, unsigned int colToRemove);
+    void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove);
 
     // used to drop weights of fixed vertices
-    void dropFixed(){
+    void dropFixed();
 
     // max number of optimization iterations
     int maxIter;
@@ -63,7 +64,7 @@ private:
     Eigen::SparseMatrix<double> weights;
 
     // weight matrix with only free vertices
-    Eigen::SparseMatrix<double> freeWeights;
+    Eigen::MatrixXd freeWeights;
 
     // Covariance matrices
     Eigen::MatrixXd covarianceMatrices;
@@ -72,10 +73,11 @@ private:
     Eigen::MatrixXi map;
     
     // Solver used for rhs computation
-    Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
-
+    //Eigen::SparseLU<Eigen::SparseMatrix<double>> testSolver;
+    Eigen::LLT<Eigen::MatrixXd> testSolver;
     // Other solver just for debugging reasons
-    Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<double>> testSolver;
+    //Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<double>> testSolver;
+    //Eigen::SimplicialLLT<Eigen::SparseMatrix<double>> testSolver;
 
     // check if constrains are updated
     bool updated;
