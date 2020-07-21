@@ -9,6 +9,9 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         map.resize(3, 2);
         map << 1, 2, 2, 0, 0, 1;
 
+        // init updated to false
+        updated = false;
+
         // All vertices are "free" with initialization
         constraints.resize(vertices.rows(), 1);
         constraints.setZero();
@@ -16,6 +19,9 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         // vertTransformed initialization
         vertTransformed.resize(vertices.rows(), vertices.cols());
         vertTransformed.setZero();
+
+        // initialize vertTransformed with vertices
+        vertTransformed = vertices;
 
         // resize covariance matrix to match number of vertices
         covarianceMatrices.resize(vertices.rows() * 3, 3);
@@ -47,12 +53,19 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         PrecomputeCotangentWeights();
         ComputeEnergyFunction();
 
+        // Set free/ fixed
+        free = vertices.rows();
+        fixed = 0;
+
+        // initialize freeWeights
+        freeWeights = weights;
+
         // Constraint testing
         // TODO this breaks if uncommented :(
         // Something is wrong with the rhs stuff
         // SetConstraint(0, false);
-        // SetPosition(0, Eigen::Vector3d(0,0,0));
-
+        SetPosition(0, Eigen::Vector3d(0.0,0.0,0.0));
+        SetConstraint(1, true);
 }
 
 // Solve ARAP
@@ -95,6 +108,7 @@ void Solver::Solve() {
         }
 
         //compute right hand side
+        /*
         Eigen::MatrixXd rhs = Eigen::MatrixXd::Zero(vertices.rows(), 3);
         for (int i = 0; i < constraints.rows(); i++) {
             if (constraints(i, 0) == 1) {
@@ -115,10 +129,66 @@ void Solver::Solve() {
             }
         }
 
+        */
+
+        // Construct weight matrix that only contains free vertices
+        // only if free/ fixed has changed
+        if(updated){
+            // constraints have changed we need to update Laplace-Beltrami operator
+            updated = false;
+            // "reset" freeWeights
+            freeWeights = weights;
+            // drop all fixed vertices rows and cols
+            dropFixed();
+            testSolver.compute(freeWeights * -1.0);
+            if (testSolver.info() != Eigen::Success) {
+                std::cout << "Fail to do Cholesky factorization." << std::endl;
+                return;
+            }
+        }
+
+        Eigen::MatrixXd rhs = Eigen::MatrixXd::Zero(free, 3);
+        for (int face = 0; face < faces.rows(); face++) {
+            for (int edge = 0; edge < 3; edge++) {
+                int i = faces(face, map(edge, 0));
+                int j = faces(face, map(edge, 1));
+
+                if (constraints(i, 0) == 1)
+                    continue;
+                rhs.row(i) += weights.coeff(i, j) / 2.0 * ((rotations.block<3, 3>(i * 3, 0)
+                    + rotations.block<3, 3>(j * 3, 0))
+                    * (vertices.row(i) - vertices.row(j)).transpose()).transpose();
+                if (constraints(j, 0) == 1){
+                    rhs.row(i) += weights.coeff(i, j) * vertTransformed.row(j); 
+                }
+            }
+        }
+
         Eigen::MatrixXd x;
-        Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
-        
-        solver.compute(weights * -1.0);
+        Eigen::VectorXd solution;
+        // outer loop for x, y, z solving
+        for (int k = 0; k < 3; k++) {
+            solution = testSolver.solve(rhs.col(k));
+            if (testSolver.info() != Eigen::Success) {
+                std::cout << "Fail to solve the sparse linear system." << std::endl;
+                return;
+            }
+                
+            int j = 0;
+            // if vertex is fixed --> continue
+            for (int i = 0; i < vertices.rows(); i++) {
+                if(constraints(i, 0) == 1){
+                    continue;
+                }
+                vertTransformed(i, k) = solution(j);
+                j++;
+            }
+        }
+
+        /*
+        // solver.analyzePattern(weights * -1.0);
+        // solver.factorize(weights * -1.0);
+        // solver.compute(weights * -1.0);
         x = solver.solve(rhs);
 
         std::cout << x << std::endl;
@@ -128,6 +198,7 @@ void Solver::Solve() {
 
             vertTransformed.row(i) = x.row(i);
         }
+        */
     }
 }
 
@@ -208,11 +279,20 @@ Eigen::MatrixXd Solver::GetTransformedVertices() {
 
 // Set a new constraint
 void Solver::SetConstraint(int idx, bool fixed){
-    if(fixed){
-        constraints(idx, 0) = 1; 
-    } else {
-        constraints(idx, 0) = 0;
+    // Change only if the constraint is changed
+    // else fixed/ free will get messed up
+    if (constraints(idx, 0) != int(fixed)){
+        if(fixed){
+            constraints(idx, 0) = 1; 
+            fixed += 1;
+            free -= 1;
+        } else {
+            constraints(idx, 0) = 0;
+            fixed -= 1;
+            free +=1;
+        }
     }
+    updated = true;
     std::cout << "constraint for vertex at " << idx << " set to: " << (int) fixed << std::endl;
 }
 
@@ -221,4 +301,37 @@ void Solver::SetPosition(int idx, const Eigen::Vector3d& pos){
     vertices.block<1, 3>(idx, 0) = pos.transpose();
     std::cout << "position for vertex at " << idx << " set to: " << 
     pos.x() << " "<< pos.y() << " " << pos.z() << std::endl;
+}
+
+void Solver::dropFixed(){
+    // Check all constraints
+    for(int i = 0; i < constraints.rows(); i++){
+        // drop if vertex constraint set to fixed
+        if(constraints(i, 0) == 1){
+            removeRow(freeWeights, i);
+            removeColumn(freeWeights, i);
+        }
+    }
+}
+
+// https://stackoverflow.com/questions/13290395/how-to-remove-a-certain-row-or-column-while-using-eigen-library-c
+void Solver::removeRow(Eigen::SparseMatrix<double>& matrix, unsigned int rowToRemove){
+    unsigned int numRows = matrix.rows()-1;
+    unsigned int numCols = matrix.cols();
+
+    if( rowToRemove < numRows )
+        matrix.block(rowToRemove,0,numRows-rowToRemove,numCols) = matrix.bottomRows(numRows-rowToRemove);
+
+    matrix.conservativeResize(numRows,numCols);
+}
+
+// https://stackoverflow.com/questions/13290395/how-to-remove-a-certain-row-or-column-while-using-eigen-library-c
+void Solver::removeColumn(Eigen::SparseMatrix<double>& matrix, unsigned int colToRemove){
+    unsigned int numRows = matrix.rows();
+    unsigned int numCols = matrix.cols()-1;
+
+    if( colToRemove < numCols )
+        matrix.block(0,colToRemove,numRows,numCols-colToRemove) = matrix.rightCols(numCols-colToRemove);
+
+    matrix.conservativeResize(numRows,numCols);
 }

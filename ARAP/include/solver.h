@@ -32,6 +32,15 @@ public:
 
 private:
 
+    // Remove row at idx
+    void removeRow(Eigen::SparseMatrix<double>& matrix, unsigned int rowToRemove);
+
+    // Remove col at idx
+    void removeColumn(Eigen::SparseMatrix<double>& matrix, unsigned int colToRemove);
+
+    // used to drop weights of fixed vertices
+    void dropFixed(){
+
     // max number of optimization iterations
     int maxIter;
 
@@ -53,11 +62,27 @@ private:
     // contangent weight matrix 
     Eigen::SparseMatrix<double> weights;
 
+    // weight matrix with only free vertices
+    Eigen::SparseMatrix<double> freeWeights;
+
     // Covariance matrices
     Eigen::MatrixXd covarianceMatrices;
 
     // Triangle index map
     Eigen::MatrixXi map;
+    
+    // Solver used for rhs computation
+    Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
+
+    // Other solver just for debugging reasons
+    Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<double>> testSolver;
+
+    // check if constrains are updated
+    bool updated;
+
+    // free/ fixed vertices count
+    int free;
+    int fixed;
 };
 
 
