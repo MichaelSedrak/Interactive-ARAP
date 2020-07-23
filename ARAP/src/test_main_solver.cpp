@@ -9,8 +9,8 @@
 int main()
 {
 	//load mesh
-	//const std::string filenameSource = std::string("../meshes/armadillo_1k.off");
-	const std::string filenameSource = std::string("../meshes/square.off");
+	const std::string filenameSource = std::string("../meshes/armadillo_1k.off");
+	//const std::string filenameSource = std::string("../meshes/square.off");
 
 	Mesh testMesh;
 

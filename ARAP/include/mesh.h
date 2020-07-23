@@ -10,8 +10,8 @@ public:
     
 	void clear(); 
 
-    const Eigen::MatrixXd getVertices() const;
-    const Eigen::MatrixXi getFaces() const;
+    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getVertices() const;
+    const Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getFaces() const;
 
     void setVertices(const Eigen::MatrixXd& v);
 
@@ -27,9 +27,9 @@ public:
 
 private:
     // vertices of the mesh
-    Eigen::MatrixXd m_vertices;
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> m_vertices;
 
     // faces of the mesh
-    Eigen::MatrixXi m_faces;
+    Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> m_faces;
 };
 

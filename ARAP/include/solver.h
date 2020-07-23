@@ -7,6 +7,8 @@
 class Solver {
 public:
 
+    Solver() {}
+
     // Solver constructor
     Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter = 5);
 

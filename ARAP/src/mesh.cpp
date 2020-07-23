@@ -8,11 +8,11 @@ void Mesh::clear(){
 	m_faces.resize(0, 0);
 } 
 
-const Eigen::MatrixXd Mesh::getVertices() const{
+const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& Mesh::getVertices() const{
     return m_vertices;
 } 
 
-const Eigen::MatrixXi Mesh::getFaces() const{
+const Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& Mesh::getFaces() const{
     return m_faces;
 } 
 
