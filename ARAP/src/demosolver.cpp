@@ -190,11 +190,15 @@ namespace arap {
                         edge_product[first] += weight * edge * edge_update.transpose();
                     }
                 }
-                for (int v = 0; v < vertex_num; ++v) {
+                for (int i = 0; i < vertex_num; ++i) {
                     Eigen::Matrix3d rotation;
-                    igl::polar_svd3x3(edge_product[v], rotation);
-                    rotations_[v] = rotation.transpose();
+                    Eigen::JacobiSVD<Eigen::MatrixXd> svd(edge_product[i], Eigen::ComputeThinU | Eigen::ComputeThinV);
+                    Eigen::Matrix3d u = svd.matrixU();
+                    Eigen::Matrix3d v = svd.matrixV();
+                    rotation = v * u.transpose();
+                    rotations_[i] = rotation.transpose();
                 }
+                
                 //std::cout << "Energy after updating rotations: " << ComputeEnergy()
                 //          << std::endl;
                 // Step 2: compute the rhs in equation (9).

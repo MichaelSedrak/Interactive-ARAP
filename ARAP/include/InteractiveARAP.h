@@ -56,7 +56,7 @@ namespace InteractiveARAP
 		static void Destroy();
 	};
 
-
+/*
 #define EXPORT_API __declspec(dllexport)
 	extern "C"
 	{
@@ -126,5 +126,5 @@ namespace InteractiveARAP
 			ARAPWrapper::GetInstance()->SetBaseMesh(meshIdx);
 		}
 	}
-
+*/
 }

@@ -33,16 +33,16 @@ namespace InteractiveARAP
 	
 	void NativeInterface::LoadAllMeshes()
 	{
-		meshes[0].loadMesh("Assets/meshes/armadillo_1k.off");
-		meshes[1].loadMesh("Assets/meshes/bar1.off");
-		meshes[2].loadMesh("Assets/meshes/bar2.off");
-		meshes[3].loadMesh("Assets/meshes/bar3.off");
-		meshes[4].loadMesh("Assets/meshes/cactus_highres.off");
-		meshes[5].loadMesh("Assets/meshes/cactus_small.off");
-		meshes[6].loadMesh("Assets/meshes/cylinder_small.off");
-		meshes[7].loadMesh("Assets/meshes/dino.off");
-		meshes[8].loadMesh("Assets/meshes/square_21.off");
-		meshes[9].loadMesh("Assets/meshes/square_21_spikes.off");
+		meshes[0].loadMesh("../meshes/armadillo_1k.off");
+		meshes[1].loadMesh("../meshes/bar1.off");
+		meshes[2].loadMesh("../meshes/bar2.off");
+		meshes[3].loadMesh("../meshes/bar3.off");
+		meshes[4].loadMesh("../meshes/cactus_highres.off");
+		meshes[5].loadMesh("../meshes/cactus_small.off");
+		meshes[6].loadMesh("../meshes/cylinder_small.off");
+		meshes[7].loadMesh("../meshes/dino.off");
+		meshes[8].loadMesh("../meshes/square_21.off");
+		meshes[9].loadMesh("../meshes/square_21_spikes.off");
 	}
 
 	void NativeInterface::SetConstraint(int size, int* rawconstraints)
@@ -90,11 +90,11 @@ namespace InteractiveARAP
 		//arapEngine.Solve();
 		//deformedMesh.setVertices(arapEngine.GetTransformedVertices());
 		//deformedMesh.writeMesh("Assets/meshes/testoutput.off");
-		demoArapEngine.RegisterData(meshes[meshIDX].getVertices(), meshes[meshIDX].getFaces(), indices, 5);
+		demoArapEngine.RegisterData(meshes[meshIDX].getVertices(), meshes[meshIDX].getFaces(), indices, 15);
 		demoArapEngine.Precompute();
 		demoArapEngine.Solve(positions);
 		deformedMesh.setVertices(demoArapEngine.GetVertexSolution());
-		deformedMesh.writeMesh("Assets/meshes/testoutput.off");
+		deformedMesh.writeMesh("../meshes/testoutput.off");
 	}
 
 	void NativeInterface::SetBaseMesh(int index)

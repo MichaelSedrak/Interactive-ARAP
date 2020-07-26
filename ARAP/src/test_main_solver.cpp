@@ -3,7 +3,7 @@
 
 #include "../include/mesh.h"
 //#include "../include/solver.h"
-//#include "../include/InteractiveARAP.h"
+#include "../include/InteractiveARAP.h"
 
 // g++ -I../libs/eigen-3.3.7/ mesh.cpp solver.cpp test_main_solver.cpp -o test 
 
@@ -43,7 +43,7 @@ int main()
 
 	//return 0;
 
-	/*InteractiveARAP::NativeInterface engine;
+	InteractiveARAP::NativeInterface engine;
 	engine.LoadAllMeshes();
 	engine.SetBaseMesh(0);
 	float positions[32] = {	109.0f,-0.339686f,-0.541938f,0.0259783f,
@@ -53,9 +53,10 @@ int main()
 							740.0f,-0.239034f,-0.493955f,0.121275f,
 							216.0f,-0.221835f,-0.543452f,0.146886f,
 							206.0f,-0.242167f,-0.527808f,-0.010471f,
-							855.0f,-0.3443436f,0.3025245f,-0.4035977f};
+							855.0f,-0.3443436f,-0.3025245f,-0.4035977f};
 	engine.SetPositions(32,positions);
 	engine.Process();
-	return 0;*/
+	return 0;
 
 }
+
