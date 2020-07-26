@@ -2,14 +2,33 @@
 
 #include <mesh.h>
 #include <solver.h>
+#include <demosolver.h>
 
 namespace InteractiveARAP
 {
+	struct VertexIndexData
+	{
+		int index;
+		double x;
+		double y;
+		double z;
+
+		bool operator<(const VertexIndexData& a) const
+		{
+			return index < a.index;
+		}
+	};
+
 	class NativeInterface
 	{
 	private:
 		std::vector<Mesh> meshes;
-		Solver arapEngine;
+		//Solver arapEngine;
+
+		arap::demo::DemoArapSolver demoArapEngine;
+		Eigen::VectorXi indices;
+		Eigen::MatrixXd positions;
+		int meshIDX;
 		
 	public:
 		Mesh deformedMesh;
