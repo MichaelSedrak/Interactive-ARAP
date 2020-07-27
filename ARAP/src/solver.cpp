@@ -63,7 +63,7 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         SetConstraint(740, true);
         SetConstraint(216, true);
         SetConstraint(206, true);
-        ComputeEnergyFunction();
+        //ComputeEnergyFunction();
 }
 
 // Solve ARAP
@@ -183,7 +183,7 @@ void Solver::Solve() {
             }
         }
 
-        ComputeEnergyFunction();
+        //ComputeEnergyFunction();
     }
 }
 
@@ -249,7 +249,6 @@ double Solver::ComputeEnergyFunction(){
             Eigen::Vector3d deltaPLine = (vertTransformed.row(i) - vertTransformed.row(j)).transpose(); 
             Eigen::Vector3d deltaP = (vertices.row(i) - vertices.row(j)).transpose();
             Eigen::Matrix3d rotI = rotations.block<3, 3>(i * 3, 0);
-            //Eigen::Vector3d leastSquares = (deltaPLine - (rotI * deltaP)).squaredNorm();
             double leastSquares = (deltaPLine - (rotI * deltaP)).squaredNorm();
             energy += weights.coeff(i, j) * leastSquares;
         }
