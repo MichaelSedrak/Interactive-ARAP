@@ -23,14 +23,15 @@ namespace InteractiveARAP
 	{
 	private:
 		std::vector<Mesh> meshes;
-		//Solver arapEngine;
+		Solver *arapEngine;
 
-		arap::demo::DemoArapSolver demoArapEngine;
-		Eigen::VectorXi indices;
+		//arap::demo::DemoArapSolver demoArapEngine;
+		/*Eigen::VectorXi indices;
 		Eigen::MatrixXd positions;
-		int meshIDX;
+		int meshIDX;*/
 		
 	public:
+		~NativeInterface();
 		Mesh deformedMesh;
 		NativeInterface();
 		void LoadAllMeshes();
@@ -56,7 +57,7 @@ namespace InteractiveARAP
 		static void Destroy();
 	};
 
-/*
+
 #define EXPORT_API __declspec(dllexport)
 	extern "C"
 	{
@@ -126,5 +127,5 @@ namespace InteractiveARAP
 			ARAPWrapper::GetInstance()->SetBaseMesh(meshIdx);
 		}
 	}
-*/
+
 }
