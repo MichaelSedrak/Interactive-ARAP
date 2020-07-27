@@ -1,6 +1,6 @@
 #include <iostream>
 #include "../include/solver.h"
-#include <igl/slice.h>
+//#include <igl/slice.h>
 
 // Constructor - sets vertices, faces, max number of iterations, constraints
 Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
@@ -117,8 +117,8 @@ void Solver::Solve() {
             }
 
             //set up the Laplace-Beltrami operator
-            igl::slice(weights, free_indices, free_indices, freeWeights);
-            //freeWeights = Eigen::MatrixXd(weights)(free_indices, free_indices).sparseView();
+            //igl::slice(weights, free_indices, free_indices, freeWeights);
+            freeWeights = Eigen::MatrixXd(weights)(free_indices, free_indices).sparseView();
             testSolver.compute(freeWeights * -1.0);
             //if (testSolver.info() != Eigen::Success) {
             //    //std::cout << "Fail to do Cholesky factorization." << std::endl;
@@ -155,11 +155,11 @@ void Solver::Solve() {
         */
         Eigen::MatrixXd b(free, 3);
 
-        Eigen::Vector3i all_col_indices;
-        all_col_indices << 0, 1, 2;
-        igl::slice(rhs, free_indices, all_col_indices, b);
+        //Eigen::Vector3i all_col_indices;
+        //all_col_indices << 0, 1, 2;
+        //igl::slice(rhs, free_indices, all_col_indices, b);
 
-        //b = rhs(free_indices, Eigen::all);
+        b = rhs(free_indices, Eigen::all);
         Eigen::MatrixXd x;
         Eigen::VectorXd solution;
         // outer loop for x, y, z solving
