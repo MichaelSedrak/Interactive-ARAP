@@ -1,5 +1,5 @@
 #include <InteractiveARAP.h>
-
+#include <fstream>
 namespace InteractiveARAP
 {
 	NativeInterface* ARAPWrapper::engine;
@@ -26,42 +26,56 @@ namespace InteractiveARAP
 		engine = nullptr;
 	}
 
+	NativeInterface::~NativeInterface()
+	{
+		delete arapEngine;
+	}
+
 	NativeInterface::NativeInterface()
 	{
+		std::ofstream out("Assets/meshes/logger.txt", std::ofstream::app);
+		out << "ConstructorBegin\n";
 		meshes.resize(10);
+		arapEngine = new Solver();
+		out << "ConstructorEnd\n";
 	}
 	
 	void NativeInterface::LoadAllMeshes()
 	{
-		meshes[0].loadMesh("../meshes/armadillo_1k.off");
-		meshes[1].loadMesh("../meshes/bar1.off");
-		meshes[2].loadMesh("../meshes/bar2.off");
-		meshes[3].loadMesh("../meshes/bar3.off");
-		meshes[4].loadMesh("../meshes/cactus_highres.off");
-		meshes[5].loadMesh("../meshes/cactus_small.off");
-		meshes[6].loadMesh("../meshes/cylinder_small.off");
-		meshes[7].loadMesh("../meshes/dino.off");
-		meshes[8].loadMesh("../meshes/square_21.off");
-		meshes[9].loadMesh("../meshes/square_21_spikes.off");
+		std::ofstream out("Assets/meshes/logger.txt", std::ofstream::app);
+		out << "LoadAllMeshes() Begin\n";
+		meshes[0].loadMesh("Assets/meshes/armadillo_1k.off");
+		meshes[1].loadMesh("Assets/meshes/bar1.off");
+		meshes[2].loadMesh("Assets/meshes/bar2.off");
+		meshes[3].loadMesh("Assets/meshes/bar3.off");
+		meshes[4].loadMesh("Assets/meshes/cactus_highres.off");
+		meshes[5].loadMesh("Assets/meshes/cactus_small.off");
+		meshes[6].loadMesh("Assets/meshes/cylinder_small.off");
+		meshes[7].loadMesh("Assets/meshes/dino.off");
+		meshes[8].loadMesh("Assets/meshes/square_21.off");
+		meshes[9].loadMesh("Assets/meshes/square_21_spikes.off");
+		out << "Armadillo Size -> " + std::to_string(meshes[0].getVertexCount()) + "\n";
+		out << "LoadAllMeshes() End\n";
 	}
 
 	void NativeInterface::SetConstraint(int size, int* rawconstraints)
 	{
-		/*for (int i = 0; i < size; i++)
-			arapEngine.SetConstraint(rawconstraints[i],true);*/
+		for (int i = 0; i < size; i++)
+			arapEngine->SetConstraint(rawconstraints[i],true);
 	}
 
 	void NativeInterface::SetPositions(int size, float* rawconstraints)
 	{
-		/*for (int i = 0; i < size; i += 4)
+		for (int i = 0; i < size; i += 4)
 		{
 			unsigned int vertexIndex = (unsigned int)rawconstraints[i];
-			arapEngine.SetConstraint(vertexIndex, true);
+			arapEngine->SetConstraint(vertexIndex, true);
 			Eigen::Vector3d vertexConstraint = Eigen::Vector3d((double)rawconstraints[i + 1], (double)rawconstraints[i + 2], (double)rawconstraints[i + 3]);
-			arapEngine.SetPosition(vertexIndex,vertexConstraint);
-		}*/
+			arapEngine->SetPosition(vertexIndex,vertexConstraint);
+		}
+
 		/*indices.resize(0, 0);
-		positions.resize(0, 0);*/
+		positions.resize(0, 0);
 
 		indices.resize(size / 4, 1);
 		positions.resize(size / 4, 3);
@@ -82,30 +96,45 @@ namespace InteractiveARAP
 			indices.row(i) << constraints[i].index;
 			positions.row(i) << constraints[i].x, constraints[i].y, constraints[i].z;
 		}
-
+		*/
 	}
 
 	void NativeInterface::Process()
 	{
-		//arapEngine.Solve();
-		//deformedMesh.setVertices(arapEngine.GetTransformedVertices());
+		std::ofstream out("Assets/meshes/logger.txt", std::ofstream::app);
+		out << "Before Solve()\n";
+		arapEngine->Solve();
+		out << "After Solve()\n";
+		deformedMesh.setVertices(arapEngine->GetTransformedVertices());
+		out << "Setting Deformed Mesh\n";
 		//deformedMesh.writeMesh("Assets/meshes/testoutput.off");
-		demoArapEngine.RegisterData(meshes[meshIDX].getVertices(), meshes[meshIDX].getFaces(), indices, 15);
+		
+		/*demoArapEngine.RegisterData(meshes[meshIDX].getVertices(), meshes[meshIDX].getFaces(), indices, 15);
 		demoArapEngine.Precompute();
 		demoArapEngine.Solve(positions);
 		deformedMesh.setVertices(demoArapEngine.GetVertexSolution());
-		deformedMesh.writeMesh("../meshes/testoutput.off");
+		deformedMesh.writeMesh("../meshes/testoutput.off");*/
 	}
 
 	void NativeInterface::SetBaseMesh(int index)
 	{
-		//arapEngine = Solver(meshes[index].getVertices(), meshes[index].getFaces(),15);
-		meshIDX = index;
+		std::ofstream out("Assets/meshes/logger.txt", std::ofstream::app);
+		out << "SetBaseMesh()\n";
+		out << "Armadillo Size -> " + std::to_string(meshes[index].getVertexCount())+"\n";
+		
+		out << "Created Solver\n";
+		
+		arapEngine = new Solver(meshes[index].getVertices(), meshes[index].getFaces(),5);
+		out << "Initialized solver\n";
+		//meshIDX = index;
 		deformedMesh = meshes[index];
+		out << "Finished SetBaseMesh()\n";
 	}
 	
 	const double* NativeInterface::getMeshVertices(int index) const
 	{
+		std::ofstream out("Assets/meshes/logger.txt", std::ofstream::app);
+		out << "Getting MeshVertices()\n";
 		return meshes[index].getVertices().data();
 	}
 

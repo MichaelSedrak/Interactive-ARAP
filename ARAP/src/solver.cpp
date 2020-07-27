@@ -40,14 +40,14 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
              rotations.block<3, 3>(i * 3, 0) = Eigen::Matrix3d::Identity(); 
         }
 
-        std::cout << "The matrix vertices is of size "
-        << vertices.rows() << "x" << vertices.cols() << std::endl;
+        //std::cout << "The matrix vertices is of size "
+        //<< vertices.rows() << "x" << vertices.cols() << std::endl;
 
-        std::cout << "The matrix faces is of size "
-        << faces.rows() << "x" << faces.cols() << std::endl;
+        //std::cout << "The matrix faces is of size "
+        //<< faces.rows() << "x" << faces.cols() << std::endl;
 
-        std::cout << "The matrix rotations is of size "
-        << rotations.rows() << "x" << rotations.cols() << std::endl;
+        //std::cout << "The matrix rotations is of size "
+        //<< rotations.rows() << "x" << rotations.cols() << std::endl;
 
         // Precompute function calls
         PrecomputeCotangentWeights();
@@ -120,10 +120,10 @@ void Solver::Solve() {
             igl::slice(weights, free_indices, free_indices, freeWeights);
             //freeWeights = Eigen::MatrixXd(weights)(free_indices, free_indices).sparseView();
             testSolver.compute(freeWeights * -1.0);
-            if (testSolver.info() != Eigen::Success) {
-                std::cout << "Fail to do Cholesky factorization." << std::endl;
-                return;
-            }
+            //if (testSolver.info() != Eigen::Success) {
+            //    //std::cout << "Fail to do Cholesky factorization." << std::endl;
+            //    return;
+            //}
         }
 
         Eigen::MatrixXd rhs = Eigen::MatrixXd::Zero(vertices.rows(), 3);
@@ -166,10 +166,10 @@ void Solver::Solve() {
         #pragma omp parallel for
         for (int k = 0; k < 3; k++) {
             solution = testSolver.solve(b.col(k));
-            if (testSolver.info() != Eigen::Success) {
+            /*if (testSolver.info() != Eigen::Success) {
                 std::cout << "Fail to solve the sparse linear system." << std::endl;
                 return;
-            }
+            }*/
                 
             int j = 0;
             // if vertex is fixed --> continue
@@ -189,7 +189,7 @@ void Solver::Solve() {
 // Precomputes the weights used in the paper
 // http://rodolphe-vaillant.fr/?e=69
 void Solver::PrecomputeCotangentWeights(){
-    std::cout << "Precomputing cotangent weights ..." << std::endl;
+    //std::cout << "Precomputing cotangent weights ..." << std::endl;
     
     // weights is a symetric matrix for vertex tuples
     weights.resize(vertices.rows(), vertices.rows());
@@ -211,7 +211,7 @@ void Solver::PrecomputeCotangentWeights(){
             // else 0 -> already satisfied with sparse matrix
         }
     }
-    std::cout << "Precomputing cotangent weights done" << std::endl;
+    //std::cout << "Precomputing cotangent weights done" << std::endl;
 }
 
 // Cotangent for every vertex in triangle
@@ -252,7 +252,7 @@ double Solver::ComputeEnergyFunction(){
             energy += weights.coeff(i, j) * leastSquares;
         }
     } 
-    std::cout << "Energy: " << energy << std::endl;
+    //std::cout << "Energy: " << energy << std::endl;
     return energy;
 }
 
@@ -276,13 +276,13 @@ void Solver::SetConstraint(int idx, bool fixed){
         }
     }
     updated = true;
-    std::cout << "constraint for vertex at " << idx << " set to: " << (int) fixed << std::endl;
+    //std::cout << "constraint for vertex at " << idx << " set to: " << (int) fixed << std::endl;
 }
 
 
 // Set updated position
 void Solver::SetPosition(int idx, const Eigen::Vector3d& pos){
     vertTransformed.row(idx) = pos.transpose();
-    std::cout << "position for vertex at " << idx << " set to: " << 
-    pos.x() << " "<< pos.y() << " " << pos.z() << std::endl;
+    //std::cout << "position for vertex at " << idx << " set to: " << 
+    //pos.x() << " "<< pos.y() << " " << pos.z() << std::endl;
 }
