@@ -1,6 +1,5 @@
 #include <iostream>
 #include "../include/solver.h"
-//#include <igl/slice.h>
 
 // Constructor - sets vertices, faces, max number of iterations, constraints
 Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
@@ -27,6 +26,7 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         // resize covariance matrix to match number of vertices
         covarianceMatrices.resize(vertices.rows() * 3, 3);
         covarianceMatrices.setZero();
+        #pragma omp parallel for
         for(int i = 0; i < vertices.rows(); i++){
              covarianceMatrices.block<3, 3>(i * 3, 0) = Eigen::Matrix3d::Zero(); 
         }
@@ -34,6 +34,7 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         // resize rotation matrix to match number of vertices
         rotations.resize(vertices.rows() * 3, 3);
         rotations.setZero();
+        #pragma omp parallel for
         for(int i = 0; i < vertices.rows(); i++){
              rotations.block<3, 3>(i * 3, 0) = Eigen::Matrix3d::Identity(); 
         }
@@ -53,8 +54,7 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         // Set free/ fixed
         free = vertices.rows();
         fixed = 0;
-        /*
-        SetPosition(855, Eigen::Vector3d(-0.3443436, -0.3025245, -0.4035977));
+        SetPosition(855, Eigen::Vector3d(-0.3443436, 0.6025245, -0.4035977));
         SetConstraint(855, true);
         SetConstraint(109, true);
         SetConstraint(328, true);
@@ -63,7 +63,6 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         SetConstraint(740, true);
         SetConstraint(216, true);
         SetConstraint(206, true);
-        */
         ComputeEnergyFunction();
 }
 
@@ -71,14 +70,15 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
 void Solver::Solve() {
     //solving iterations
     for (int k = 0; k < maxIter; k++) {
-        std::cout << "Solving iteration" << std::endl;
         // set up covariance matrix S
         // This is equation (5) from the paper
         Eigen::MatrixXd covarianceMatrices;
         covarianceMatrices.resize(vertices.rows() * 3, 3);
         covarianceMatrices.setZero();
 
+        #pragma omp parallel for
         for (int face = 0; face < faces.rows(); face++) {
+            #pragma omp parallel for
             for (int edge = 0; edge < 3; edge++) {
                 int i = faces(face, map(edge, 0));
                 int j = faces(face, map(edge, 1));
@@ -97,6 +97,7 @@ void Solver::Solve() {
         }
 
         //solve for rotation
+        #pragma omp parallel for
         for (int i = 0; i < vertices.rows(); i++) {
             Eigen::JacobiSVD<Eigen::MatrixXd> svd(covarianceMatrices.block<3, 3>(i * 3, 0), Eigen::ComputeThinU | Eigen::ComputeThinV);
             Eigen::Matrix3d u = svd.matrixU();
@@ -132,7 +133,9 @@ void Solver::Solve() {
         }
 
         Eigen::MatrixXd rhs = Eigen::MatrixXd::Zero(vertices.rows(), 3);
+        #pragma omp parallel for
         for (int face = 0; face < faces.rows(); face++) {
+            #pragma omp parallel for
             for (int edge = 0; edge < 3; edge++) {
                 int i = faces(face, map(edge, 0));
                 int j = faces(face, map(edge, 1));
@@ -161,6 +164,7 @@ void Solver::Solve() {
         Eigen::MatrixXd x;
         Eigen::VectorXd solution;
         // outer loop for x, y, z solving
+        #pragma omp parallel for
         for (int k = 0; k < 3; k++) {
             solution = testSolver.solve(b.col(k));
             if (testSolver.info() != Eigen::Success) {
@@ -190,8 +194,10 @@ void Solver::PrecomputeCotangentWeights(){
     
     // weights is a symetric matrix for vertex tuples
     weights.resize(vertices.rows(), vertices.rows());
+    #pragma omp parallel for
     for(int i = 0; i < faces.rows(); i++){
         Eigen::Vector3d cot = ComputeFaceCotangent(i);
+        #pragma omp parallel for
         for(int j = 0; j < 3; j++){
 
             // https://wikimedia.org/api/rest_v1/media/math/render/svg/8231849c9a676c7dc50c5ce348de162a19e411b2
@@ -282,28 +288,3 @@ void Solver::SetPosition(int idx, const Eigen::Vector3d& pos){
     std::cout << "position for vertex at " << idx << " set to: " << 
     pos.x() << " "<< pos.y() << " " << pos.z() << std::endl;
 }
-
-/*
-// https://stackoverflow.com/questions/13290395/how-to-remove-a-certain-row-or-column-while-using-eigen-library-c
-void Solver::removeRow(Eigen::MatrixXd& matrix, unsigned int rowToRemove){
-    unsigned int numRows = matrix.rows()-1;
-    unsigned int numCols = matrix.cols();
-
-    if( rowToRemove < numRows )
-        matrix.block(rowToRemove,0,numRows-rowToRemove,numCols) = matrix.bottomRows(numRows-rowToRemove);
-
-    matrix.conservativeResize(numRows,numCols);
-}
-
-// https://stackoverflow.com/questions/13290395/how-to-remove-a-certain-row-or-column-while-using-eigen-library-c
-void Solver::removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove){
-    unsigned int numRows = matrix.rows();
-    unsigned int numCols = matrix.cols()-1;
-
-    if( colToRemove < numCols )
-        matrix.block(0,colToRemove,numRows,numCols-colToRemove) = matrix.rightCols(numCols-colToRemove);
-
-    matrix.conservativeResize(numRows,numCols);
-}
-
-*/

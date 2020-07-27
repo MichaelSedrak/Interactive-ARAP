@@ -2,7 +2,6 @@
 
 #include "Eigen/Dense"
 #include "Eigen/Sparse"
-//#include "Eigen/CholmodSupport"
 
 class Solver {
 public:
@@ -34,13 +33,6 @@ public:
     Eigen::MatrixXd GetTransformedVertices();
 
 private:
-
-    // Remove row at idx
-    //void removeRow(Eigen::MatrixXd& matrix, unsigned int rowToRemove);
-
-    // Remove col at idx
-    //void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove);
-
     // max number of optimization iterations
     int maxIter;
 
@@ -72,10 +64,6 @@ private:
     Eigen::MatrixXi map;
     
     // Solver used for rhs computation
-    //Eigen::SparseLU<Eigen::SparseMatrix<double>> testSolver;
-    //Eigen::LLT<Eigen::MatrixXd> testSolver;
-    // Other solver just for debugging reasons
-    //Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<double>> testSolver;
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> testSolver;
 
     // check if constrains are updated

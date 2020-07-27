@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <chrono>
 
 #include "../include/mesh.h"
 #include "../include/solver.h"
@@ -11,23 +12,52 @@ int main()
 {
 	//load mesh
 	const std::string filenameSource = std::string("../meshes/armadillo_1k.off");
-	////const std::string filenameSource = std::string("../meshes/square.off");
-
 	Mesh testMesh;
 
-	if (!testMesh.loadMesh(filenameSource)) {
-		std::cout << "Mesh file wasn't read successfully at location: " << filenameSource << std::endl;
-		return -1;
-	}
+    // Get starting timepoint 
+    auto startLoad = std::chrono::high_resolution_clock::now(); 
 
-	////init ARAP module
+    if (!testMesh.loadMesh(filenameSource)) {
+		std::cout << "Mesh file wasn't read successfully at location: " << filenameSource << std::endl;
+    	return -1;
+	}
+    // Get ending timepoint 
+    auto stopLoad = std::chrono::high_resolution_clock::now(); 
+  
+    auto durationLoad = std::chrono::duration_cast<std::chrono::milliseconds>(stopLoad - startLoad); 
+    std::cout << "Time taken by function loadMesh(): " << durationLoad.count() << " ms" << std::endl; 
+  
+
+
+    // Get starting timepoint 
+    auto startInit = std::chrono::high_resolution_clock::now(); 
+
+	//init ARAP module
 	Solver* arapSolver = new Solver(testMesh.getVertices(), testMesh.getFaces(), 15);
 
+    // Get ending timepoint 
+    auto stopInit = std::chrono::high_resolution_clock::now(); 
+  
+    auto durationInit = std::chrono::duration_cast<std::chrono::milliseconds>(stopInit - startInit); 
+    std::cout << "Time taken for Solver init: " << durationInit.count() << " ms" << std::endl; 
+
+
+
+    // Get starting timepoint 
+    auto startSolve = std::chrono::high_resolution_clock::now(); 
+    	
 	arapSolver->Solve();
 
+    // Get ending timepoint 
+    auto stopSolve = std::chrono::high_resolution_clock::now(); 
+  
+    auto durationSolve =std::chrono:: duration_cast<std::chrono::milliseconds>(stopSolve - startSolve); 
+    std::cout << "Time taken by function Solve(): " << durationSolve.count() << " ms" << std::endl; 
+
+
 	testMesh.setVertices(arapSolver->GetTransformedVertices());
- //   // Only uncomment if you enjoy scrolling
-	////testMesh.verboseOutput();
+    // Only uncomment if you enjoy scrolling
+	// testMesh.verboseOutput();
 	testMesh.writeMesh("output.off");
 
 	delete arapSolver;
