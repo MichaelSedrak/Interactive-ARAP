@@ -21,26 +21,16 @@ int main()
 	}
 
 	////init ARAP module
-	Solver arapSolver = Solver(testMesh.getVertices(), testMesh.getFaces(), 15);
+	Solver* arapSolver = new Solver(testMesh.getVertices(), testMesh.getFaces(), 15);
 
-	//for (int i = 0; i < 15; i++)
-	//{
-	//	arapSolver.Solve();
-	//	testMesh.setVertices(arapSolver.GetTransformedVertices());
-	//	testMesh.writeMesh("output" + std::to_string(i) + ".off");
-	//}
-	//return 0;
- //   // TODO set constraints
-	//// arapSolver.SetConstraint()
+	arapSolver->Solve();
 
-	//// Solve ARAP
-	arapSolver.Solve();
-
-	testMesh.setVertices(arapSolver.GetTransformedVertices());
+	testMesh.setVertices(arapSolver->GetTransformedVertices());
  //   // Only uncomment if you enjoy scrolling
 	////testMesh.verboseOutput();
 	testMesh.writeMesh("output.off");
 
+	delete arapSolver;
 	return 0;
 /*
 	InteractiveARAP::NativeInterface engine;

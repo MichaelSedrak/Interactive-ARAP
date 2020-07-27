@@ -1,6 +1,6 @@
 #include <iostream>
 #include "../include/solver.h"
-#include <igl/slice.h>
+//#include <igl/slice.h>
 
 // Constructor - sets vertices, faces, max number of iterations, constraints
 Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
@@ -10,8 +10,8 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         map.resize(3, 2);
         map << 1, 2, 2, 0, 0, 1;
 
-        // init updated to false
-        updated = false;
+        // init updated to true
+        updated = true;
 
         // All vertices are "free" with initialization
         constraints.resize(vertices.rows(), 1);
@@ -49,14 +49,11 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
 
         // Precompute function calls
         PrecomputeCotangentWeights();
-        //ComputeEnergyFunction();
 
         // Set free/ fixed
         free = vertices.rows();
         fixed = 0;
-
-        // initialize freeWeights
-        freeWeights = weights;
+        /*
         SetPosition(855, Eigen::Vector3d(-0.3443436, -0.3025245, -0.4035977));
         SetConstraint(855, true);
         SetConstraint(109, true);
@@ -66,6 +63,8 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         SetConstraint(740, true);
         SetConstraint(216, true);
         SetConstraint(206, true);
+        */
+        ComputeEnergyFunction();
 }
 
 // Solve ARAP
@@ -73,7 +72,6 @@ void Solver::Solve() {
     //solving iterations
     for (int k = 0; k < maxIter; k++) {
         std::cout << "Solving iteration" << std::endl;
-        ComputeEnergyFunction();
         // set up covariance matrix S
         // This is equation (5) from the paper
         Eigen::MatrixXd covarianceMatrices;
@@ -108,41 +106,24 @@ void Solver::Solve() {
             rotations.block<3, 3>(i * 3, 0) = (v * u.transpose()).transpose();
         }
 
-        //compute right hand side
-        /*
-        Eigen::MatrixXd rhs = Eigen::MatrixXd::Zero(vertices.rows(), 3);
-        for (int i = 0; i < constraints.rows(); i++) {
-            if (constraints(i, 0) == 1) {
-                rhs.row(i) = (weights * -1.0 * vertices.row(i).transpose()).transpose();
-            }
-        }
-
-        for (int face = 0; face < faces.rows(); face++) {
-            for (int edge = 0; edge < 3; edge++) {
-                int i = faces(face, map(edge, 0));
-                int j = faces(face, map(edge, 1));
-
-                if (constraints(i, 0) == 1)
-                    continue;
-                rhs.row(i) += weights.coeff(i, j) / 2.0 * ((rotations.block<3, 3>(i * 3, 0)
-                    + rotations.block<3, 3>(j * 3, 0))
-                    * (vertices.row(i) - vertices.row(j)).transpose()).transpose();
-            }
-        }
-
-        */
-
         // Construct weight matrix that only contains free vertices
         // only if free/ fixed has changed
         if(updated){
             // constraints have changed we need to update Laplace-Beltrami operator
             updated = false;
-            // "reset" freeWeights
-            freeWeights = weights;
-            // drop all fixed vertices rows and cols
-            //dropFixed();
 
-            igl::slice(weights, constraints.col(0), constraints.col(0), freeWeights);
+            //get the indices of the free vertices
+            free_indices.resize(free);
+            int counter = 0;
+            for (int i = 0; i < vertices.rows(); i++) {
+                if (constraints(i, 0) == 0) {
+                    free_indices[counter++] = i;
+                }
+            }
+
+            //set up the Laplace-Beltrami operator
+            //igl::slice(weights, free_indices, free_indices, freeWeights);
+            freeWeights = Eigen::MatrixXd(weights)(free_indices, free_indices).sparseView();
             testSolver.compute(freeWeights * -1.0);
             if (testSolver.info() != Eigen::Success) {
                 std::cout << "Fail to do Cholesky factorization." << std::endl;
@@ -167,24 +148,25 @@ void Solver::Solve() {
             }
         }
 
+        /*
         for (int i = 0; i < constraints.rows(); i++) {
             // drop if vertex constraint set to fixed
             if (constraints(i, 0) == 1) {
                 removeRow(rhs, i);
             }
         }
-
+        */
+        Eigen::MatrixXd b(free, 3);
+        b = rhs(free_indices, Eigen::all);
         Eigen::MatrixXd x;
         Eigen::VectorXd solution;
         // outer loop for x, y, z solving
         for (int k = 0; k < 3; k++) {
-            solution = testSolver.solve(rhs.col(k));
-            /*
+            solution = testSolver.solve(b.col(k));
             if (testSolver.info() != Eigen::Success) {
                 std::cout << "Fail to solve the sparse linear system." << std::endl;
                 return;
             }
-            */
                 
             int j = 0;
             // if vertex is fixed --> continue
@@ -197,20 +179,7 @@ void Solver::Solve() {
             }
         }
 
-        /*
-        // solver.analyzePattern(weights * -1.0);
-        // solver.factorize(weights * -1.0);
-        // solver.compute(weights * -1.0);
-        x = solver.solve(rhs);
-
-        std::cout << x << std::endl;
-        for (int i = 0; i < vertices.rows(); i++) {
-            if (constraints(i, 0) == 1)
-                continue;
-
-            vertTransformed.row(i) = x.row(i);
-        }
-        */
+        ComputeEnergyFunction();
     }
 }
 
@@ -265,7 +234,6 @@ Eigen::Vector3d Solver::ComputeFaceCotangent(int face){
 // Energy function - as scalar
 // This is the implementation of equation (3) of the paper
 double Solver::ComputeEnergyFunction(){
-    std::cout << "Precomputing energy function ..." << std::endl;
     double energy = 0.0;
     for(int face = 0; face < faces.rows(); face++){
         for(int edge = 0; edge < 3; edge++){
@@ -280,8 +248,7 @@ double Solver::ComputeEnergyFunction(){
             energy += weights.coeff(i, j) * leastSquares;
         }
     } 
-    std::cout << "Precomputing energy function done." << std::endl;
-    std::cout << "Initial energy: " << energy << std::endl;
+    std::cout << "Energy: " << energy << std::endl;
     return energy;
 }
 
@@ -308,24 +275,15 @@ void Solver::SetConstraint(int idx, bool fixed){
     std::cout << "constraint for vertex at " << idx << " set to: " << (int) fixed << std::endl;
 }
 
+
 // Set updated position
 void Solver::SetPosition(int idx, const Eigen::Vector3d& pos){
     vertTransformed.row(idx) = pos.transpose();
     std::cout << "position for vertex at " << idx << " set to: " << 
     pos.x() << " "<< pos.y() << " " << pos.z() << std::endl;
 }
+
 /*
-void Solver::dropFixed(){
-    // Check all constraints
-    for(int i = 0; i < constraints.rows(); i++){
-        // drop if vertex constraint set to fixed
-        if(constraints(i, 0) == 1){
-            removeRow(freeWeights, i);
-            removeColumn(freeWeights, i);
-        }
-    }
-}
-*/
 // https://stackoverflow.com/questions/13290395/how-to-remove-a-certain-row-or-column-while-using-eigen-library-c
 void Solver::removeRow(Eigen::MatrixXd& matrix, unsigned int rowToRemove){
     unsigned int numRows = matrix.rows()-1;
@@ -347,3 +305,5 @@ void Solver::removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove){
 
     matrix.conservativeResize(numRows,numCols);
 }
+
+*/

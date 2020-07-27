@@ -36,13 +36,10 @@ public:
 private:
 
     // Remove row at idx
-    void removeRow(Eigen::MatrixXd& matrix, unsigned int rowToRemove);
+    //void removeRow(Eigen::MatrixXd& matrix, unsigned int rowToRemove);
 
     // Remove col at idx
-    void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove);
-
-    // used to drop weights of fixed vertices
-    //void dropFixed();
+    //void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove);
 
     // max number of optimization iterations
     int maxIter;
@@ -87,6 +84,9 @@ private:
     // free/ fixed vertices count
     int free;
     int fixed;
+
+    //indices of the free vertices inside the vertices array
+    Eigen::VectorXi free_indices;
 };
 
 
