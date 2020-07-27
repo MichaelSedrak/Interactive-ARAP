@@ -2,26 +2,26 @@
 #include <fstream>
 
 #include "../include/mesh.h"
-//#include "../include/solver.h"
-#include "../include/InteractiveARAP.h"
+#include "../include/solver.h"
+//#include "../include/InteractiveARAP.h"
 
 // g++ -I../libs/eigen-3.3.7/ mesh.cpp solver.cpp test_main_solver.cpp -o test 
 
 int main()
 {
-	////load mesh
-	//const std::string filenameSource = std::string("../meshes/armadillo_1k.off");
+	//load mesh
+	const std::string filenameSource = std::string("../meshes/armadillo_1k.off");
 	////const std::string filenameSource = std::string("../meshes/square.off");
 
-	//Mesh testMesh;
+	Mesh testMesh;
 
-	//if (!testMesh.loadMesh(filenameSource)) {
-	//	std::cout << "Mesh file wasn't read successfully at location: " << filenameSource << std::endl;
-	//	return -1;
-	//}
+	if (!testMesh.loadMesh(filenameSource)) {
+		std::cout << "Mesh file wasn't read successfully at location: " << filenameSource << std::endl;
+		return -1;
+	}
 
 	////init ARAP module
-	//Solver arapSolver = Solver(testMesh.getVertices(), testMesh.getFaces(),1);
+	Solver arapSolver = Solver(testMesh.getVertices(), testMesh.getFaces(), 15);
 
 	//for (int i = 0; i < 15; i++)
 	//{
@@ -34,15 +34,15 @@ int main()
 	//// arapSolver.SetConstraint()
 
 	//// Solve ARAP
-	//arapSolver.Solve();
+	arapSolver.Solve();
 
-	//testMesh.setVertices(arapSolver.GetTransformedVertices());
+	testMesh.setVertices(arapSolver.GetTransformedVertices());
  //   // Only uncomment if you enjoy scrolling
 	////testMesh.verboseOutput();
-	//testMesh.writeMesh("output.off");
+	testMesh.writeMesh("output.off");
 
-	//return 0;
-
+	return 0;
+/*
 	InteractiveARAP::NativeInterface engine;
 	engine.LoadAllMeshes();
 	engine.SetBaseMesh(0);
@@ -57,6 +57,5 @@ int main()
 	engine.SetPositions(32,positions);
 	engine.Process();
 	return 0;
-
+*/
 }
-

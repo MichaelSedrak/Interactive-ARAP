@@ -10,7 +10,7 @@ public:
     Solver() {}
 
     // Solver constructor
-    Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter = 5);
+    Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter = 15);
 
     // Precomputes the weights used in the paper
     void PrecomputeCotangentWeights();
@@ -42,7 +42,7 @@ private:
     void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove);
 
     // used to drop weights of fixed vertices
-    void dropFixed();
+    //void dropFixed();
 
     // max number of optimization iterations
     int maxIter;
@@ -66,7 +66,7 @@ private:
     Eigen::SparseMatrix<double> weights;
 
     // weight matrix with only free vertices
-    Eigen::MatrixXd freeWeights;
+    Eigen::SparseMatrix<double> freeWeights;
 
     // Covariance matrices
     Eigen::MatrixXd covarianceMatrices;
@@ -76,10 +76,10 @@ private:
     
     // Solver used for rhs computation
     //Eigen::SparseLU<Eigen::SparseMatrix<double>> testSolver;
-    Eigen::LLT<Eigen::MatrixXd> testSolver;
+    //Eigen::LLT<Eigen::MatrixXd> testSolver;
     // Other solver just for debugging reasons
     //Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<double>> testSolver;
-    //Eigen::SimplicialLLT<Eigen::SparseMatrix<double>> testSolver;
+    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> testSolver;
 
     // check if constrains are updated
     bool updated;

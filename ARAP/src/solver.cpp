@@ -1,5 +1,6 @@
 #include <iostream>
 #include "../include/solver.h"
+#include <igl/slice.h>
 
 // Constructor - sets vertices, faces, max number of iterations, constraints
 Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
@@ -43,9 +44,6 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         std::cout << "The matrix faces is of size "
         << faces.rows() << "x" << faces.cols() << std::endl;
 
-        std::cout << "The matrix constraints is of size "
-        << constraints.rows() << "x" << constraints.cols() << std::endl;
-
         std::cout << "The matrix rotations is of size "
         << rotations.rows() << "x" << rotations.cols() << std::endl;
 
@@ -59,23 +57,15 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
 
         // initialize freeWeights
         freeWeights = weights;
-
-        // Constraint testing
-        // TODO this breaks if uncommented :(
-        // Something is wrong with the rhs stuff
-        // SetConstraint(0, false);
-        /*
-        for (int i = 0; i < 24; i++) {
-            SetPosition(i, vertices.row(i).transpose() + Eigen::Vector3d(1.0, 0.0, 0.0));
-            SetConstraint(i, true);
-            SetConstraint(i + 24, true);
-        }
-        */
-        SetPosition(0, Eigen::Vector3d(-1.0, -1.0, 0.0));
-        SetConstraint(0, true);
-
-        SetConstraint(2, true);
-        SetConstraint(3, true);
+        SetPosition(855, Eigen::Vector3d(-0.3443436, -0.3025245, -0.4035977));
+        SetConstraint(855, true);
+        SetConstraint(109, true);
+        SetConstraint(328, true);
+        SetConstraint(518, true);
+        SetConstraint(316, true);
+        SetConstraint(740, true);
+        SetConstraint(216, true);
+        SetConstraint(206, true);
 }
 
 // Solve ARAP
@@ -115,7 +105,7 @@ void Solver::Solve() {
             Eigen::Matrix3d v = svd.matrixV();
 
             // This is equation (6) from the paper
-            rotations.block<3, 3>(i * 3, 0) = v * u.transpose();
+            rotations.block<3, 3>(i * 3, 0) = (v * u.transpose()).transpose();
         }
 
         //compute right hand side
@@ -148,9 +138,11 @@ void Solver::Solve() {
             // constraints have changed we need to update Laplace-Beltrami operator
             updated = false;
             // "reset" freeWeights
-            freeWeights = Eigen::MatrixXd(weights);
+            freeWeights = weights;
             // drop all fixed vertices rows and cols
-            dropFixed();
+            //dropFixed();
+
+            igl::slice(weights, constraints.col(0), constraints.col(0), freeWeights);
             testSolver.compute(freeWeights * -1.0);
             if (testSolver.info() != Eigen::Success) {
                 std::cout << "Fail to do Cholesky factorization." << std::endl;
@@ -322,7 +314,7 @@ void Solver::SetPosition(int idx, const Eigen::Vector3d& pos){
     std::cout << "position for vertex at " << idx << " set to: " << 
     pos.x() << " "<< pos.y() << " " << pos.z() << std::endl;
 }
-
+/*
 void Solver::dropFixed(){
     // Check all constraints
     for(int i = 0; i < constraints.rows(); i++){
@@ -333,7 +325,7 @@ void Solver::dropFixed(){
         }
     }
 }
-
+*/
 // https://stackoverflow.com/questions/13290395/how-to-remove-a-certain-row-or-column-while-using-eigen-library-c
 void Solver::removeRow(Eigen::MatrixXd& matrix, unsigned int rowToRemove){
     unsigned int numRows = matrix.rows()-1;
