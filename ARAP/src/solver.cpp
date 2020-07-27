@@ -54,6 +54,7 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         // Set free/ fixed
         free = vertices.rows();
         fixed = 0;
+        /*
         SetPosition(855, Eigen::Vector3d(-0.3443436, 0.6025245, -0.4035977));
         SetConstraint(855, true);
         SetConstraint(109, true);
@@ -63,6 +64,7 @@ Solver::Solver(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, int iter){
         SetConstraint(740, true);
         SetConstraint(216, true);
         SetConstraint(206, true);
+        */
         //ComputeEnergyFunction();
 }
 
