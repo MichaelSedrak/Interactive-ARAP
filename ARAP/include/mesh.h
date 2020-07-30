@@ -1,7 +1,8 @@
 #pragma once
 
+#include "Eigen/Dense"
+#include "Eigen/Sparse"
 #include <iostream>
-#include <vector>
 
 class Mesh {
 public:
@@ -9,17 +10,26 @@ public:
     
 	void clear(); 
 
-    std::vector<float>& getVertices();
-    std::vector<int>& getTriangles();
+    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getVertices() const;
+    const Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& getFaces() const;
 
-    void transform(const float& transformation);
+    void setVertices(const Eigen::MatrixXd& v);
+
+    const int getVertexCount() const;
+    const int getFacesCount() const;
+
+    void setVertexAtIndex(int i, double x, double y, double z);
+
 	bool loadMesh(const std::string& filename);
     bool writeMesh(const std::string& filename); 
     
     void verboseOutput();
 
 private:
-    std::vector<float> m_vertices;
-    std::vector<int> m_triangles;
+    // vertices of the mesh
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> m_vertices;
+
+    // faces of the mesh
+    Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> m_faces;
 };
 

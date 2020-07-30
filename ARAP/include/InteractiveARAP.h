@@ -1,38 +1,60 @@
 #pragma once
 
-#include <class1.h>
 #include <mesh.h>
+#include <solver.h>
+#include <demosolver.h>
 
 namespace InteractiveARAP
 {
+	struct VertexIndexData
+	{
+		int index;
+		double x;
+		double y;
+		double z;
+
+		bool operator<(const VertexIndexData& a) const
+		{
+			return index < a.index;
+		}
+	};
+
 	class NativeInterface
 	{
 	private:
-		Mesh meshIO;
-		std::vector<std::vector<float>> meshesVertices;
-		std::vector<std::vector<int>> meshesIndices;
-
+		std::vector<Mesh> meshes;
+		Solver *arapEngine;
+		//arap::demo::DemoArapSolver demoArapEngine;
+		/*Eigen::VectorXi indices;
+		Eigen::MatrixXd positions;
+		int meshIDX;*/
+		
 	public:
+		~NativeInterface();
+		Mesh deformedMesh;
 		NativeInterface();
 		void LoadAllMeshes();
-		std::vector<float>& getMeshVertices(int index);
-		std::vector<int>& getMeshIndices(int index);
+		void SetBaseMesh(int index);
+		void SetConstraint(int size, int* constraints);
+		void SetPositions(int size, float* constraints);
+		void Process();
+		const double* getMeshVertices(int index) const;
+		const int* getMeshIndices(int index) const;
+		int getMeshVerticesSize(int index);
+		int getMeshIndicesSize(int index);
 	};
 
-	class ARAP
+	class ARAPWrapper
 	{
 	private:
-		//static dummyClass* engine;
 		static NativeInterface* engine;
 
+
 	public:
-		ARAP();
-		~ARAP();
-		void Process();
-		//static dummyClass* GetInstance();
+		ARAPWrapper();
+		~ARAPWrapper();
 		static NativeInterface* GetInstance();
 		static void Destroy();
-
 	};
 
 
@@ -41,28 +63,68 @@ namespace InteractiveARAP
 	{
 		EXPORT_API void Initialize()
 		{
-			ARAP::GetInstance();
-			ARAP::GetInstance()->LoadAllMeshes();
+			ARAPWrapper::GetInstance();
+			ARAPWrapper::GetInstance()->LoadAllMeshes();
 		}
 
-		EXPORT_API float* GetVertices(int modelIndex)
+		EXPORT_API const double* GetVertices(int modelIndex)
 		{
-			return ARAP::GetInstance()->getMeshVertices(modelIndex).data();
+			return ARAPWrapper::GetInstance()->getMeshVertices(modelIndex);
 		}
 
-		EXPORT_API int* GetIndices(int modelIndex)
+		EXPORT_API const int* GetIndices(int modelIndex)
 		{
-			return ARAP::GetInstance()->getMeshIndices(modelIndex).data();
+			return ARAPWrapper::GetInstance()->getMeshIndices(modelIndex);
 		}
 
 		EXPORT_API int GetIndicesSize(int modelIndex)
 		{
-			return ARAP::GetInstance()->getMeshIndices(modelIndex).size();
+			return ARAPWrapper::GetInstance()->getMeshIndicesSize(modelIndex);
 		}
 
 		EXPORT_API int GetVerticesSize(int modelIndex)
 		{
-			return ARAP::GetInstance()->getMeshVertices(modelIndex).size();
+			return ARAPWrapper::GetInstance()->getMeshVerticesSize(modelIndex);
+		}
+
+		EXPORT_API const double* GetDeformedVertices()
+		{
+			return ARAPWrapper::GetInstance()->deformedMesh.getVertices().data();
+		}
+
+		EXPORT_API const int* GetDeformedIndices()
+		{
+			return ARAPWrapper::GetInstance()->deformedMesh.getFaces().data();
+		}
+
+		EXPORT_API int GetDeformedIndicesSize()
+		{
+			return ARAPWrapper::GetInstance()->deformedMesh.getFacesCount();
+		}
+
+		EXPORT_API int GetDeformedVerticesSize()
+		{
+			return ARAPWrapper::GetInstance()->deformedMesh.getVertexCount();
+		}
+
+		EXPORT_API void SetConstraint(int size, int* constraints)
+		{
+			ARAPWrapper::GetInstance()->SetConstraint(size,constraints);
+		}
+		
+		EXPORT_API void SetPositions(int size, float* constraints)
+		{
+			ARAPWrapper::GetInstance()->SetPositions(size,constraints);
+		}
+
+		EXPORT_API void Process()
+		{
+			ARAPWrapper::GetInstance()->Process();
+		}
+
+		EXPORT_API void SetBaseMesh(int meshIdx)
+		{
+			ARAPWrapper::GetInstance()->SetBaseMesh(meshIdx);
 		}
 	}
 
