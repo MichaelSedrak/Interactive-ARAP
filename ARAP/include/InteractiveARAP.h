@@ -24,7 +24,6 @@ namespace InteractiveARAP
 	private:
 		std::vector<Mesh> meshes;
 		Solver *arapEngine;
-
 		//arap::demo::DemoArapSolver demoArapEngine;
 		/*Eigen::VectorXi indices;
 		Eigen::MatrixXd positions;
@@ -49,6 +48,7 @@ namespace InteractiveARAP
 	{
 	private:
 		static NativeInterface* engine;
+
 
 	public:
 		ARAPWrapper();

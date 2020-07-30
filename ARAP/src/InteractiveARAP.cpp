@@ -38,6 +38,7 @@ namespace InteractiveARAP
 		meshes.resize(10);
 		arapEngine = new Solver();
 		out << "ConstructorEnd\n";
+
 	}
 	
 	void NativeInterface::LoadAllMeshes()
